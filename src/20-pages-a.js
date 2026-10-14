@@ -268,7 +268,7 @@ function pageFamily(el){
 
     c=h('section',{class:'card'});c.append(h('h2',{text:'Family members'}));
     var l=h('div',{class:'list'});
-    memberList().forEach(function(x){l.append(h('div',{class:'item'},avatar(x.id),h('div',{class:'t'},h('b',{text:x.name||'Member'}),h('small',{text:x.id===S.uid?'You':'Member'}))))});
+    memberList().forEach(function(x){l.append(h('button',{class:'item',type:'button',onclick:function(){go('person',x.id)}},avatar(x.id),h('div',{class:'t'},h('b',{text:x.name||'Member'}),h('small',{text:(x.id===S.uid?'You':'Member')+' · tap to see or edit details'})),h('span',{class:'muted','aria-hidden':'true',text:'›'})))});
     c.append(l);wrap.append(c);
 
     if(S.mode==='cloud'){
@@ -302,4 +302,73 @@ function exportAll(){
   out.myFood={days:ucol(S.uid,'days').items,foods:ucol(S.uid,'foods').items};
   var a=h('a',{href:URL.createObjectURL(new Blob([JSON.stringify(out,null,1)],{type:'application/json'})),download:'nourish-backup-'+today()+'.json'});
   document.body.append(a);a.click();a.remove();toast('Backup downloaded');
+}
+
+/* person details: everyone in the family can view and edit anyone's details */
+var BLOOD=[['','Not sure'],['A+','A+'],['A-','A−'],['B+','B+'],['B-','B−'],['AB+','AB+'],['AB-','AB−'],['O+','O+'],['O-','O−']];
+var INFO_SECTIONS=[
+  {k:'basics',icon:'🪪',title:'Basics',fields:[
+    {k:'fullName',label:'Full name',max:80},{k:'nickname',label:'Nickname',max:40},{k:'birthday',label:'Birthday',type:'date'},
+    {k:'phone',label:'Phone',max:40,tel:true},{k:'contactEmail',label:'Email',max:80},{k:'address',label:'Address',type:'textarea',rows:2}]},
+  {k:'health',icon:'🩺',title:'Health',fields:[
+    {k:'blood',label:'Blood type',type:'select',opts:BLOOD},{k:'allergies',label:'Allergies',type:'textarea',rows:2,ph:'e.g. peanuts, penicillin'},
+    {k:'meds',label:'Medications',type:'textarea',rows:2,ph:'Name, dose, when'},{k:'conditions',label:'Health conditions',type:'textarea',rows:2},
+    {k:'doctor',label:'Doctor',max:120,ph:'Name and phone'},{k:'dentist',label:'Dentist',max:120,ph:'Name and phone'},
+    {k:'insurance',label:'Health insurance',max:120,ph:'Provider and where the card is kept'},{k:'healthNotes',label:'Other health notes',type:'textarea',rows:2}]},
+  {k:'work',icon:'💼',title:'Work & school',fields:[
+    {k:'org',label:'Employer or school',max:120},{k:'role',label:'Job title or grade/class',max:80},
+    {k:'contact',label:'Manager or teacher',max:120,ph:'Name and phone or email'},{k:'workPhone',label:'Work or school phone',max:40,tel:true},
+    {k:'schedule',label:'Schedule notes',type:'textarea',rows:2,ph:'e.g. Mon–Fri 9–5, pick-up 3:15'}]},
+  {k:'sizes',icon:'👕',title:'Sizes & preferences',fields:[
+    {k:'top',label:'Shirt / top size',max:20},{k:'bottom',label:'Pants / bottom size',max:20},{k:'shoe',label:'Shoe size',max:20},
+    {k:'favFoods',label:'Favourite foods',type:'textarea',rows:2},{k:'dislikes',label:'Dislikes',type:'textarea',rows:2},
+    {k:'gifts',label:'Gift ideas',type:'textarea',rows:2}]}
+];
+function pagePerson(el,param){
+  var uid=param&&S.members[param]?param:S.uid;
+  var head=h('div'),wrap=h('div',{class:'page-inner',style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  el.append(head,wrap);
+  function show(f,v){
+    if(f.type==='select'){var o=f.opts.filter(function(x){return x[0]===v})[0];return o?o[1]:v}
+    if(f.type==='date'&&v){var d=new Date(v+'T00:00');return isNaN(d)?v:d.toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'})}
+    return v;
+  }
+  var built=false;
+  return function upd(){
+    if(built&&document.activeElement&&wrap.contains(document.activeElement)&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+    built=true;
+    var m=S.members[uid]||{},info=m.info||{},isMe=uid===S.uid;
+    head.replaceChildren(pageHead(nameOf(uid)+(isMe?' (you)':''),'Everyone in the family can see and change these details'));
+    wrap.replaceChildren();
+    wrap.append(h('section',{class:'card'},h('div',{class:'row'},avatar(uid,'lg'),h('div',{class:'grow'},h('b',{text:m.name||'Member',style:{fontSize:'1.2rem'}}),
+      h('div',{class:'muted small',text:m.infoBy?'Last changed by '+nameOf(m.infoBy)+(m.infoAt?' on '+new Date(m.infoAt).toLocaleDateString():''):'No details added yet'})),
+      h('button',{class:'btn sm',type:'button',onclick:function(){
+        openForm({title:isMe?'My profile':nameOf(uid)+'’s profile',values:{name:m.name,emoji:m.emoji,color:m.color},fields:[
+          {k:'name',label:'Name',req:true,max:30},
+          {k:'emoji',label:'Avatar',type:'chips',opts:EMOJIS.map(function(e){return [e,e]})},
+          {k:'color',label:'Colour',type:'chips',opts:COLORS.map(function(c){return [c,'●']})}],
+          save:function(v){savePerson(uid,{name:v.name,emoji:v.emoji,color:v.color})}});
+      }},'Edit'))));
+    INFO_SECTIONS.forEach(function(sec){
+      var c=h('section',{class:'card'}),l=h('div',{class:'list'}),any=false;
+      c.append(h('div',{class:'row'},h('h2',{class:'grow',text:sec.icon+' '+sec.title}),h('button',{class:'btn sm',type:'button','aria-label':'Edit '+sec.title,onclick:function(){
+        var vals={};sec.fields.forEach(function(f){vals[f.k]=info[f.k]==null?(f.type==='select'?'':''):info[f.k]});
+        openForm({title:sec.title+' — '+nameOf(uid),values:vals,fields:sec.fields.map(function(f){return Object.assign({},f)}),
+          save:function(v){
+            var next=Object.assign({},(S.members[uid]||{}).info||{});
+            sec.fields.forEach(function(f){var x=v[f.k];next[f.k]=typeof x==='string'?x.trim():(x==null?'':x)});
+            savePerson(uid,{info:next,infoBy:S.uid,infoAt:Date.now()}).then(function(){toast('Saved')},function(){toast('Could not save. Try again.')});
+          }});
+      }},'Edit')));
+      sec.fields.forEach(function(f){
+        var v=info[f.k];if(v==null||v==='')return;any=true;
+        var val=show(f,v);
+        l.append(h('div',{class:'item'},h('div',{class:'t'},h('small',{text:f.label}),
+          f.tel?h('a',{href:'tel:'+String(v).replace(/[^\d+]/g,''),text:val,style:{fontWeight:'600'}}):h('b',{text:val,style:{whiteSpace:'pre-wrap'}}))));
+      });
+      c.append(any?l:h('div',{class:'muted small',text:'Nothing added yet. Tap Edit to add.'}));
+      wrap.append(c);
+    });
+    if(S.mode==='cloud')wrap.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){go('food',uid)}},'🥗 Open '+(isMe?'my':nameOf(uid)+'’s')+' calorie log'));
+  };
 }

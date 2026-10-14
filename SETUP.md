@@ -102,7 +102,8 @@ Skip this if you don't need it. The rest of the app works without it. Do this **
 4. **Each family member on iPhone**:
    - Open the link in **Safari** → **Continue with Google** → type the code → **Join with a code**.
    - Tap the **Share** button → **Add to Home Screen** → **Add**.
-5. Quick check: add a shopping item ("2 milk") on one device and see it show up on the other.
+5. **Add details for each person**: Family & settings → tap a name under **Family members** → fill in **Basics**, **Health**, **Work & school**, **Sizes & preferences**. Anyone in the family can do this for anyone. (Don't store full ID numbers like passport or social security. Write where the card is kept instead.)
+6. Quick check: add a shopping item ("2 milk") on one device and see it show up on the other.
 
 ---
 
@@ -110,7 +111,7 @@ Skip this if you don't need it. The rest of the app works without it. Do this **
 
 - Only Google accounts on your **Who can join** list can read or change family data. The family code alone is not enough.
 - If you remove someone, they lose access right away.
-- Each person's calorie log can be changed only by that person. The family can view it.
+- Inside the family, everyone can see and change everyone's details and calorie logs. Nobody can change another person's sign-in email.
 - People who are not on the list can't even see that your family exists.
 - Google stores the data encrypted, and all traffic is encrypted (https).
 

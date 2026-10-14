@@ -37,10 +37,13 @@ service cloud.firestore {
               || (request.resource.data.geminiKey is string && request.resource.data.geminiKey.size() < 300)))
         || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'currency']));
 
-      // Family-visible profile copy: each person writes only their own; owner can remove people.
+      // Family profile + details: anyone in the family can view and edit anyone's,
+      // except the sign-in email, which only that person sets. Owner can remove people.
       match /members/{uid} {
         allow read: if inFamily(code);
-        allow create, update: if inFamily(code) && request.auth.uid == uid;
+        allow create: if inFamily(code) && request.auth.uid == uid;
+        allow update: if inFamily(code) && (request.auth.uid == uid
+          || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email']));
         allow delete: if inFamily(code) && (request.auth.uid == uid || isOwner(code));
       }
       // All shared family data (tasks, shopping, money, events, ...).
@@ -49,14 +52,13 @@ service cloud.firestore {
       }
     }
 
-    // Personal profile + calorie log. Only you can write; your family can read.
+    // Personal profile (only you) + calorie log and saved foods (your whole family can view and edit).
     match /users/{uid} {
       allow create, update: if signedIn() && request.auth.uid == uid
         && allowedIn(request.resource.data.familyId);
       allow read: if signedIn() && (request.auth.uid == uid || inFamily(resource.data.familyId));
       match /{sub}/{id} {
-        allow write: if signedIn() && request.auth.uid == uid;
-        allow read: if signedIn() && (request.auth.uid == uid || inFamily(userDoc(uid).data.familyId));
+        allow read, write: if signedIn() && (request.auth.uid == uid || inFamily(userDoc(uid).data.familyId));
       }
     }
   }

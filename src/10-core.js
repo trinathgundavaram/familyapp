@@ -100,13 +100,20 @@ function makeCol(segs,opts){
 function col(name){return Store.cols[name]||(Store.cols[name]=makeCol(['families',S.famId||'local',name]))}
 function ucol(uid,name){
   var k=uid+'/'+name;
-  return Store.ucols[k]||(Store.ucols[k]=makeCol(['users',uid,name],{ro:uid!==S.uid}));
+  return Store.ucols[k]||(Store.ucols[k]=makeCol(['users',uid,name]));
 }
 function saveMe(patch){
   Object.assign(S.members[S.uid]=S.members[S.uid]||{},patch);
   if(Store.cloud){var FS=Store.FS;return Promise.all([FS.setDoc(FS.doc(Store.fdb,'users',S.uid),clean(patch),{merge:true}),
     FS.setDoc(FS.doc(Store.fdb,'families',S.famId,'members',S.uid),clean(patch),{merge:true})])}
   LSset('nourish2:me',S.members[S.uid]);refresh();return Promise.resolve();
+}
+// Save profile/details for any family member (everyone in the family may edit anyone).
+function savePerson(uid,patch){
+  if(uid===S.uid)return saveMe(patch);
+  Object.assign(S.members[uid]=S.members[uid]||{},patch);refresh();
+  if(Store.cloud)return Store.FS.setDoc(Store.FS.doc(Store.fdb,'families',S.famId,'members',uid),clean(patch),{merge:true});
+  return Promise.resolve();
 }
 function saveFam(patch){
   Object.assign(S.fam,patch);

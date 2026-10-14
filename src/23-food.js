@@ -12,12 +12,12 @@ function foodSummary(uid,date){var t=sumEntries(dayEntries(uid,date));return {ca
 function entryFrom(food,servings,meal,disp){
   return {id:newId(),meal:meal,name:food.name,serving:food.serving||'',qty:r1(servings*100)/100,disp:disp||'',cal:Math.round(food.cal*servings),p:r1((food.p||0)*servings),c:r1((food.c||0)*servings),f:r1((food.f||0)*servings)};
 }
-function addEntries(date,entries){
-  var c=ucol(S.uid,'days'),d=c.get(date)||{id:date,date:date,entries:[]};
+function addEntries(date,entries,uid){
+  var c=ucol(uid||S.uid,'days'),d=c.get(date)||{id:date,date:date,entries:[]};
   c.save(Object.assign({},d,{id:date,date:date,entries:d.entries.concat(entries)}));
 }
-function removeEntry(date,id){
-  var c=ucol(S.uid,'days'),d=c.get(date);if(!d)return;
+function removeEntry(date,id,uid){
+  var c=ucol(uid||S.uid,'days'),d=c.get(date);if(!d)return;
   var i=d.entries.findIndex(function(e){return e.id===id});if(i<0)return;
   var gone=d.entries[i],rest=d.entries.filter(function(e){return e.id!==id});
   c.save(Object.assign({},d,{entries:rest}));
@@ -91,13 +91,13 @@ async function aiEstimate(text){
 }
 
 /* add-food sheet */
-function openAddFood(date,meal){
+function openAddFood(date,meal,uid){
   var A={mode:'search',meal:meal||defaultFMeal(),q:'',sel:null,est:[],estText:'',refreshAdd:null},closeFn=null;
   var chips=h('div',{class:'chips scroll'});
   function drawChips(){chips.replaceChildren();FMEALS.forEach(function(m){chips.append(h('button',{class:'chip',type:'button','aria-pressed':A.meal===m[0]?'true':'false',onclick:function(){A.meal=m[0];drawChips();if(A.refreshAdd)A.refreshAdd()}},m[2]+' '+m[1]))})}
   drawChips();
   var pane=h('div',{class:'form'});
-  function commit(entries){addEntries(date,entries);closeFn.close();toast(entries.length===1?'Added '+entries[0].name:'Added '+entries.length+' items')}
+  function commit(entries){addEntries(date,entries,uid);closeFn.close();toast(entries.length===1?'Added '+entries[0].name:'Added '+entries.length+' items')}
   function drawPane(){pane.replaceChildren();A.refreshAdd=null;({search:drawSearch,detail:drawDetail,packaged:drawPackaged,ai:drawAI,custom:drawCustom})[A.mode]()}
   function back(){return h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){A.mode='search';drawPane()}},'‹ Back to search')}
   function rememberBox(label){var cb=h('input',{type:'checkbox'});cb.checked=true;return {row:h('label',{class:'togrow'},h('span',{text:label}),cb),box:cb}}
@@ -225,15 +225,15 @@ function openAddFood(date,meal){
   closeFn=openSheet('Add food',h('div',{class:'form'},chips,pane));
 }
 
-function goalSheet(){
-  var m=me(),gIn=h('input',{id:'goalIn',type:'number',inputmode:'numeric',min:'800',max:'6000',value:m.goal||2000}),gmsg=h('div',{class:'small',style:{color:'var(--over)'},'aria-live':'polite'});
+function goalSheet(uid){
+  uid=uid||S.uid;var m=S.members[uid]||{},isMe=uid===S.uid,gIn=h('input',{id:'goalIn',type:'number',inputmode:'numeric',min:'800',max:'6000',value:m.goal||2000}),gmsg=h('div',{class:'small',style:{color:'var(--over)'},'aria-live':'polite'});
   function fld(id,label,attrs){var i=h('input',Object.assign({id:id},attrs));return {i:i,w:h('div',{class:'field'},h('label',{for:id,text:label}),i)}}
   var age=fld('cAge','Age',{type:'number',inputmode:'numeric',min:'18',max:'110'}),ft=fld('cFt','Height, feet',{type:'number',inputmode:'numeric',min:'3',max:'8'}),inch=fld('cIn','Inches',{type:'number',inputmode:'numeric',min:'0',max:'11',value:'0'}),wt=fld('cWt','Weight, pounds',{type:'number',inputmode:'decimal',min:'60',max:'700'});
   var sex=h('select',{id:'cSex'},h('option',{value:'f',text:'Female'}),h('option',{value:'m',text:'Male'}));
   var act=h('select',{id:'cAct'},h('option',{value:'1.2',text:'Mostly sitting'}),h('option',{value:'1.375',text:'Light activity',selected:true}),h('option',{value:'1.55',text:'Active, exercise most days'}),h('option',{value:'1.725',text:'Very active or physical job'}));
   var aim=h('select',{id:'cAim'},h('option',{value:'0',text:'Stay at my weight'}),h('option',{value:'-250',text:'Lose about 0.5 lb a week'}),h('option',{value:'-500',text:'Lose about 1 lb a week'}),h('option',{value:'250',text:'Gain about 0.5 lb a week'}));
   var res=h('div',{class:'form','aria-live':'polite'}),el;
-  function save(v){v=Math.round(Number(v));if(!(v>=800&&v<=6000)){gmsg.textContent='Enter a goal between 800 and 6,000 calories.';return false}saveMe({goal:v,goalSet:true});return true}
+  function save(v){v=Math.round(Number(v));if(!(v>=800&&v<=6000)){gmsg.textContent='Enter a goal between 800 and 6,000 calories.';return false}savePerson(uid,{goal:v,goalSet:true});return true}
   var calc=h('button',{class:'btn wide',type:'button',onclick:function(){
     var a=Number(age.i.value),H=Number(ft.i.value)*12+Number(inch.i.value||0),W=Number(wt.i.value);res.replaceChildren();
     if(!(a>=18&&H>=36&&W>=60)){res.append(h('div',{class:'muted small',text:'Fill in age, height and weight to see a suggestion.'}));return}
@@ -242,7 +242,7 @@ function goalSheet(){
       h('button',{class:'btn primary wide',type:'button',onclick:function(){if(save(target)){el.close();toast('Goal set to '+fmt(target))}}},'Use this goal'),
       h('div',{class:'muted small',text:'This is an estimate. Please talk to a doctor or dietitian before cutting calories, especially if you are older or have a health condition.'}));
   }},'Work out a goal for me');
-  el=openSheet('Daily calorie goal',h('div',{class:'form'},h('div',{class:'field'},h('label',{for:'goalIn',text:'My daily goal (calories)'}),gIn),gmsg,
+  el=openSheet(isMe?'Daily calorie goal':nameOf(uid)+'’s daily calorie goal',h('div',{class:'form'},h('div',{class:'field'},h('label',{for:'goalIn',text:isMe?'My daily goal (calories)':nameOf(uid)+'’s daily goal (calories)'}),gIn),gmsg,
     h('button',{class:'btn primary wide',type:'button',onclick:function(){if(save(gIn.value)){el.close();toast('Goal saved')}}},'Save goal'),
     h('details',{style:{background:'var(--soft)',borderRadius:'14px',padding:'0 14px'}},h('summary',{style:{minHeight:'48px',display:'flex',alignItems:'center',fontWeight:'700'}},'Help me choose a goal'),
       h('div',{class:'form',style:{paddingBottom:'14px'}},h('div',{class:'f2'},age.w,h('div',{class:'field'},h('label',{for:'cSex',text:'Sex'}),sex)),h('div',{class:'f2',style:{gridTemplateColumns:'repeat(3,1fr)'}},ft.w,inch.w,wt.w),h('div',{class:'field'},h('label',{for:'cAct',text:'Activity'}),act),h('div',{class:'field'},h('label',{for:'cAim',text:'Aim'}),aim),calc,res))));
@@ -253,8 +253,8 @@ function pageFood(el,param){
   var seg=segControl([['day','Day'],['week','Week'],['fam','Family']],tab,function(v){tab=v;upd()});
   var body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var banner=h('div',{class:'card',style:{background:'var(--ink)',color:'var(--bg)'},hidden:true});
-  el.append(pageHead('Calories',null,[h('button',{class:'btn sm',type:'button',onclick:goalSheet},'🎯 Goal')]),seg,banner,body,fab('Add food',function(){openAddFood(date)}));
-  function ro(){return view!==S.uid}
+  el.append(pageHead('Calories',null,[h('button',{class:'btn sm',type:'button',onclick:function(){goalSheet(view)}},'🎯 Goal')]),seg,banner,body,fab('Add food',function(){openAddFood(date,null,view)}));
+  function ro(){return false} // everyone in the family can edit any log
   function dateBar(){
     return h('div',{class:'card',style:{padding:'8px',flexDirection:'row',alignItems:'center'}},
       h('button',{class:'ibtn plain',type:'button','aria-label':'Previous day',onclick:function(){date=addDays(date,-1);upd()}},'‹'),
@@ -264,7 +264,7 @@ function pageFood(el,param){
   function dayView(){
     var entries=dayEntries(view,date),t=sumEntries(entries),goal=goalOf(view),left=goal-t.cal,over=left<0;
     body.append(dateBar());
-    if(!ro()&&!me().goalSet)body.append(h('div',{class:'card',style:{flexDirection:'row',alignItems:'center'}},h('span',{class:'grow',text:'Set your daily calorie goal for better numbers.'}),h('button',{class:'btn primary sm',type:'button',onclick:goalSheet},'Set goal')));
+    if(view===S.uid&&!me().goalSet)body.append(h('div',{class:'card',style:{flexDirection:'row',alignItems:'center'}},h('span',{class:'grow',text:'Set your daily calorie goal for better numbers.'}),h('button',{class:'btn primary sm',type:'button',onclick:function(){goalSheet()}},'Set goal')));
     var tgt={p:goal*0.25/4,c:goal*0.5/4,f:goal*0.25/9},mac=h('div',{class:'macrow'});
     [['p','Protein',t.p,'var(--c-tasks)'],['c','Carbs',t.c,'var(--c-shop)'],['f','Fat',t.f,'var(--c-notes)']].forEach(function(x){var b=h('i');b.style.width=Math.min(100,x[2]/tgt[x[0]]*100)+'%';b.style.background=x[3];mac.append(h('div',null,h('div',{class:'row'},h('span',{text:x[1]}),h('b',{class:'right num',text:fmt(x[2])+' g'})),h('div',{class:'bar'},b)))});
     body.append(h('section',{class:'card'},h('div',{class:'row'},donut([{v:Math.min(t.cal,goal),color:over?'var(--over)':'var(--c-food)'}],goal,fmt(Math.abs(left)),over?'over':'left'),
@@ -273,13 +273,13 @@ function pageFood(el,param){
     FMEALS.forEach(function(m){
       var list=entries.filter(function(e){return e.meal===m[0]}),sub=sum(list,function(e){return e.cal||0});
       var c=h('section',{class:'card'}),l=h('div',{class:'list'});
-      c.append(h('div',{class:'row'},h('span',{class:'avatar',text:m[2]}),h('div',{class:'grow'},h('b',{text:m[1]}),h('div',{class:'muted small num',text:sub?fmt(sub)+' kcal':'Nothing yet'})),ro()?null:h('button',{class:'ibtn brand',type:'button','aria-label':'Add to '+m[1],onclick:function(){openAddFood(date,m[0])}},'+')));
+      c.append(h('div',{class:'row'},h('span',{class:'avatar',text:m[2]}),h('div',{class:'grow'},h('b',{text:m[1]}),h('div',{class:'muted small num',text:sub?fmt(sub)+' kcal':'Nothing yet'})),ro()?null:h('button',{class:'ibtn brand',type:'button','aria-label':'Add to '+m[1],onclick:function(){openAddFood(date,m[0],view)}},'+')));
       list.forEach(function(e){
         var detail=e.disp?e.disp:((e.serving||'')+(e.qty&&e.qty!==1?' × '+fmtQty(e.qty):'')),macros=(e.p||e.c||e.f)?'P '+r1(e.p||0)+' · C '+r1(e.c||0)+' · F '+r1(e.f||0):'';
-        l.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:e.name}),h('small',{text:[detail,macros].filter(Boolean).join('  ·  ')})),h('b',{class:'num',text:fmt(e.cal||0)}),ro()?null:h('button',{class:'ibtn plain',type:'button','aria-label':'Remove '+e.name,onclick:function(){removeEntry(date,e.id)}},'×')));
+        l.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:e.name}),h('small',{text:[detail,macros].filter(Boolean).join('  ·  ')})),h('b',{class:'num',text:fmt(e.cal||0)}),ro()?null:h('button',{class:'ibtn plain',type:'button','aria-label':'Remove '+e.name,onclick:function(){removeEntry(date,e.id,view)}},'×')));
       });
       if(list.length)c.append(l);
-      if(!ro()&&!list.length&&yest&&yest.entries.some(function(e){return e.meal===m[0]}))c.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){addEntries(date,yest.entries.filter(function(e){return e.meal===m[0]}).map(function(e){return Object.assign({},e,{id:newId()})}))}},'Copy yesterday’s '+m[1].toLowerCase()));
+      if(!ro()&&!list.length&&yest&&yest.entries.some(function(e){return e.meal===m[0]}))c.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){addEntries(date,yest.entries.filter(function(e){return e.meal===m[0]}).map(function(e){return Object.assign({},e,{id:newId()})}),view)}},'Copy yesterday’s '+m[1].toLowerCase()));
       body.append(c);
     });
   }
@@ -311,8 +311,8 @@ function pageFood(el,param){
   }
   function upd(){
     var active=document.activeElement;if(active&&active.tagName==='INPUT'&&body.contains(active))return;
-    banner.hidden=!ro();
-    if(ro()){banner.replaceChildren(h('div',{class:'row'},h('span',{class:'grow',text:'Viewing '+nameOf(view)+'’s log (read only)'}),h('button',{class:'btn sm',type:'button',style:{background:'var(--bg)',color:'var(--ink)'},onclick:function(){view=S.uid;upd()}},'My log')))}
+    banner.hidden=view===S.uid;
+    if(view!==S.uid){banner.replaceChildren(h('div',{class:'row'},h('span',{class:'grow',text:'Viewing '+nameOf(view)+'’s log. Changes are saved to their log.'}),h('button',{class:'btn sm',type:'button',style:{background:'var(--bg)',color:'var(--ink)'},onclick:function(){view=S.uid;upd()}},'My log')))}
     $('.fab',el)&&($('.fab',el).hidden=ro()||tab==='fam');
     body.replaceChildren();
     ({day:dayView,week:weekView,fam:famView})[tab]();
