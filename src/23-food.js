@@ -77,11 +77,13 @@ function searchPackaged(q){
     }).filter(Boolean).slice(0,12);
   });
 }
-function aiAvailable(){return !!(CFG.geminiKey&&!/^PASTE/i.test(CFG.geminiKey))}
+// Key comes from the family settings (owner sets it; only family can read it), else app-config.js.
+function aiKey(){var k=S.fam.geminiKey||CFG.geminiKey||'';return /^PASTE/i.test(k)?'':k}
+function aiAvailable(){return !!aiKey()}
 async function aiEstimate(text){
-  var model=CFG.geminiModel||'gemini-2.5-flash';
+  var model=CFG.geminiModel||'gemini-3.8-flash';
   var prompt='Estimate the nutrition of this food or meal: "'+text.replace(/"/g,"'")+'"\nIf it is several foods, split it into separate items. Where no portion is given, assume one typical home portion and say which in "serving". Reply with only a JSON array. Each item is {"name": string, "serving": string, "calories": number, "protein": number, "carbs": number, "fat": number} where the numbers describe that whole serving and macros are grams. Example: [{"name":"Boiled egg","serving":"2 large","calories":156,"protein":12.6,"carbs":1.2,"fat":10.6}]';
-  var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(CFG.geminiKey),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.2}})});
+  var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':aiKey()},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.2}})});
   if(!r.ok){var er=new Error('http');er.status=r.status;throw er}
   var j=await r.json(),t=j.candidates[0].content.parts.map(function(p){return p.text||''}).join('');
   var arr=JSON.parse(t.replace(/^```(?:json)?|```$/g,'').trim());
@@ -185,7 +187,7 @@ function openAddFood(date,meal){
         A.est=items.slice(0,12).map(function(x){var it={name:String(x.name||'Food').slice(0,80),serving:String(x.serving||'1 serving').slice(0,40),cal:Math.round(num(x.calories,5000)),p:num(x.protein,2000),c:num(x.carbs,2000),f:num(x.fat,2000)};it.base={cal:it.cal,p:it.p,c:it.c,f:it.f};return it}).filter(function(x){return x.cal>0});
         status.textContent=A.est.length?'AI estimate. Change any number that looks wrong, or remove an item.':'No foods found. Try different words, or enter your own calories.';rows();
       }catch(e){
-        var st=e&&e.status;status.textContent=st===429?'The free AI limit was reached for now. Try again later, or use packaged search or your own calories.':(st===400||st===403)?'The AI key is not working. Check the setup steps.':'The AI estimate did not work. Check your connection and try again.';
+        var st=e&&e.status;status.textContent=st===429?'The free AI limit was reached for now. Try again later, or use packaged search or your own calories.':(st===500||st===503)?'The AI is busy right now. Wait a minute and tap Try again.':(st===400||st===401||st===403)?'The AI key is not working. The family owner can paste a new one in Family & settings.':st===404?'This AI model was retired. Update geminiModel in app-config.js.':'The AI estimate did not work. Check your connection and try again.';
         if(st!==400&&st!==403)retry.hidden=false;
       }
     }

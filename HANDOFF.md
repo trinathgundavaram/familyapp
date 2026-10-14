@@ -46,7 +46,7 @@ If you edit `src/`, run `python3 build.py` and copy `out/index.html` to `site/in
 2. **Edit `app-config.js`**: replace `PASTE_YOUR_FIREBASE_API_KEY`, `PASTE_PROJECT_ID.firebaseapp.com`, `PASTE_PROJECT_ID`, `PASTE_APP_ID`. (Firebase web keys are not secrets; security comes from the rules.)
 3. **GitHub**: create a **public** repo (free Pages needs public), upload the contents of `site/` to the repo root, Settings → Pages → deploy from `main` / root. URL will be `https://<user>.github.io/<repo>/`.
 4. **Firebase → Authentication → Settings → Authorized domains**: add `<user>.github.io`. (Without this Google sign-in fails with `auth/unauthorized-domain`.)
-5. **Optional Gemini**: key from aistudio.google.com/apikey, restrict it by HTTP referrer to `https://<user>.github.io/*`, put it in `geminiKey`. Model default `gemini-2.5-flash` (check it is still current; change `geminiModel` if the API returns 404).
+5. **Optional Gemini**: AI Studio now issues `AQ.` keys, which cannot be referrer-restricted. So the key is NOT in `app-config.js`; the family owner pastes it in Family & settings and it is stored in `families/{code}.geminiKey` (readable only by allow-listed members, writable only by the owner). Model: `gemini-3.8-flash` (`gemini-2.5-flash` returns 404 for new users). The key is sent in the `x-goog-api-key` header.
 6. First person signs in → "Start a family" → gets the code (Family tab → share). Others sign in → "Join with a code". Everyone: Safari → Share → Add to Home Screen.
 
 Claude Code can do: edit `app-config.js` once the user pastes the values, create the repo and push with `gh` if the user is logged in, enable Pages (`gh api`), and verify the live URL loads. It cannot create the Firebase project or enable Google auth.

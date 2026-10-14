@@ -27,12 +27,14 @@ service cloud.firestore {
       allow create: if verified()
         && request.resource.data.owner == request.auth.uid
         && request.resource.data.allowed == [myEmail()];
-      // Owner manages the list (and must stay on it); others may only change name/currency.
+      // Owner manages the list (and must stay on it) and the AI key; others may only change name/currency.
       allow update: if inFamily(code) && (
         (resource.data.owner == request.auth.uid
           && request.resource.data.owner == resource.data.owner
           && validAllowed(request.resource.data.allowed)
-          && myEmail() in request.resource.data.allowed)
+          && myEmail() in request.resource.data.allowed
+          && (!('geminiKey' in request.resource.data)
+              || (request.resource.data.geminiKey is string && request.resource.data.geminiKey.size() < 300)))
         || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'currency']));
 
       // Family-visible profile copy: each person writes only their own; owner can remove people.

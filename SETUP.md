@@ -82,11 +82,14 @@ Claude will put the keys into `app-config.js` and publish the update.
 
 ## Part C — Optional: AI calorie estimates (Gemini)
 
-Skip this if you don't need it. The rest of the app works without it.
+Skip this if you don't need it. The rest of the app works without it. Do this **after** Part D step 1 (once you have started your family).
 
-1. Open https://aistudio.google.com/apikey → **Create API key** → pick your `familyapp` project.
-2. Copy the key and paste it to Claude.
-3. To protect it: open https://console.cloud.google.com/apis/credentials → click the key → **Application restrictions: Websites** → add `https://trinathgundavaram.github.io/*` → **Save**.
+1. Open https://aistudio.google.com/apikey → **Create API key** → copy it.
+2. In the app, go to **Family & settings** → **AI calorie estimates** → paste the key → **Save**.
+   - Only the family owner sees this box.
+   - The key is kept privately in your family space. Only people on your **Who can join** list can use it.
+   - **Never** put the key in `app-config.js` or anywhere on GitHub, because the repo is public.
+3. To turn it off later, tap **Turn off and delete key** in the same box.
 
 ---
 
@@ -120,4 +123,6 @@ Skip this if you don't need it. The rest of the app works without it.
 | "Could not create the family" | Do step B5 again and make sure you clicked **Publish** |
 | Page shows 404 | Wait 2 minutes after Part A; check Pages is set to **main** / **root** |
 | Sign-in popup does nothing on iPhone | Tell Claude; there is a known fix to switch the sign-in style |
+| "The AI is busy right now" | Google's free AI is busy; wait a minute and try again |
+| "The AI key is not working" | Make a new key (Part C step 1) and paste it again |
 | Old version still showing | Close the app fully and reopen it |

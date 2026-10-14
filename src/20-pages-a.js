@@ -233,6 +233,23 @@ function pageFamily(el){
     }
     return c;
   }
+  function aiCard(){
+    var isOwner=S.fam.owner===S.uid,on=!!S.fam.geminiKey;
+    var c=h('section',{class:'card'});
+    c.append(h('h2',{text:'AI calorie estimates'}),h('p',{class:'muted small',text:on?'On for the whole family.':'Off. '+(isOwner?'Paste a free Gemini key to turn it on for the whole family.':'The family owner can turn it on.')}));
+    if(!isOwner)return c;
+    c.append(h('p',{class:'muted small',text:'The key is saved privately in your family space. Only people on the “Who can join” list can use it.'}));
+    var inp=h('input',{type:'password',placeholder:on?'Paste a new key to replace it':'Paste Gemini key',autocomplete:'off',autocapitalize:'none',spellcheck:'false','aria-label':'Gemini key'});
+    c.append(h('div',{class:'row'},h('div',{class:'grow'},inp),h('button',{class:'btn primary',type:'button',onclick:function(){
+      var k=inp.value.trim();if(k.length<20||/\s/.test(k)){toast('That does not look like a full key.');return}
+      saveFam({geminiKey:k}).then(function(){inp.value='';toast('AI estimates are on.')},function(){toast('Could not save. Try again.')});
+    }},'Save')));
+    if(on)c.append(h('button',{class:'btn ghost wide danger',type:'button',onclick:function(){
+      if(!confirm('Turn off AI estimates and delete the key?'))return;
+      saveFam({geminiKey:''}).then(function(){toast('AI estimates are off.')},function(){toast('Could not remove. Try again.')});
+    }},'Turn off and delete key'));
+    return c;
+  }
   var built=false;
   return function upd(){
     if(built&&document.activeElement&&document.activeElement.tagName==='INPUT'&&wrap.contains(document.activeElement))return;
@@ -259,6 +276,7 @@ function pageFamily(el){
         h('div',{class:'code',text:S.famId}),h('button',{class:'btn primary wide',type:'button',onclick:share},'Share invite'));
       wrap.append(c);
       wrap.append(allowCard());
+      wrap.append(aiCard());
     }else{
       wrap.append(h('section',{class:'card'},h('h2',{text:'Family sharing is off'}),h('p',{class:'muted small',text:'Right now everything stays on this device. Finish the one-time setup in the README (about 15 minutes) and this page will show your invite code.'})));
     }
