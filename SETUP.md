@@ -93,19 +93,30 @@ Skip this if you don't need it. The rest of the app works without it.
 ## Part D — Start using it
 
 1. **On your laptop**: open https://trinathgundavaram.github.io/familyapp/ → **Continue with Google** → type a family name → **Start a new family**.
-2. Go to the **Family** page and copy the **family code** (8 letters). Send it to your family.
-3. **Each family member on iPhone**:
+2. Go to **Family & settings** → **Who can join** → type each family member's **Google email** → **Add**.
+   Only emails on this list can see your family's data. You are the owner, so only you can change the list.
+3. On the same page, tap **Share invite** to send the link and the 8-letter family code.
+4. **Each family member on iPhone**:
    - Open the link in **Safari** → **Continue with Google** → type the code → **Join with a code**.
    - Tap the **Share** button → **Add to Home Screen** → **Add**.
-4. Quick check: add a shopping item ("2 milk") on one device and see it show up on the other.
+5. Quick check: add a shopping item ("2 milk") on one device and see it show up on the other.
 
 ---
+
+## How your data is protected
+
+- Only Google accounts on your **Who can join** list can read or change family data. The family code alone is not enough.
+- If you remove someone, they lose access right away.
+- Each person's calorie log can be changed only by that person. The family can view it.
+- People who are not on the list can't even see that your family exists.
+- Google stores the data encrypted, and all traffic is encrypted (https).
 
 ## If something goes wrong
 
 | What you see | What to do |
 |---|---|
 | "This web address is not allowed yet" | Do step B3 again; check the spelling `trinathgundavaram.github.io` |
+| "Could not join… ask the family owner to add …" | The owner must add that exact Google email under **Who can join** |
 | "Could not create the family" | Do step B5 again and make sure you clicked **Publish** |
 | Page shows 404 | Wait 2 minutes after Part A; check Pages is set to **main** / **root** |
 | Sign-in popup does nothing on iPhone | Tell Claude; there is a known fix to switch the sign-in style |

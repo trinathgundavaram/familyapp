@@ -130,19 +130,20 @@ function gateSignIn(AU,auth){
       h('button',{class:'btn link',type:'button',onclick:function(){el.remove();res('local')}},'Try it on this device only')]);
   });
 }
-function gateFamily(FS,fdb,uid){
+function gateFamily(FS,fdb,uid,email,note){
   return new Promise(function(res){
     var msg=h('div',{class:'muted small','aria-live':'polite'}),el;
     var codeIn=h('input',{type:'text',placeholder:'Family code',maxlength:'10',autocapitalize:'characters','aria-label':'Family code',style:{textAlign:'center',letterSpacing:'.15em',fontWeight:'700'}});
     var nameIn=h('input',{type:'text',placeholder:'Family name, e.g. The Gundavarams',maxlength:'40','aria-label':'Family name'});
     function done(code){el.remove();res(code)}
     el=gate([h('div',{class:'logo','aria-hidden':'true'},'👨‍👩‍👧'),h('h1',{text:'Set up your family'}),
-      h('p',{class:'muted',text:'Start a new family space, or join one with a code from a family member.'}),
+      note?h('p',{class:'muted small',text:note}):null,
+      h('p',{class:'muted',text:'Start a new family space, or join one with a code from a family member. To join, the family owner must first add your email ('+email+') in Family & settings.'}),
       nameIn,
       h('button',{class:'btn primary wide',type:'button',onclick:async function(){
         var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',code='',buf=new Uint8Array(8);crypto.getRandomValues(buf);for(var i=0;i<8;i++)code+=chars[buf[i]%chars.length];
         msg.textContent='Creating…';
-        try{await FS.setDoc(FS.doc(fdb,'families',code),{owner:uid,created:Date.now(),name:nameIn.value.trim()||'Our family',currency:'$'});done(code)}
+        try{await FS.setDoc(FS.doc(fdb,'families',code),{owner:uid,allowed:[email],created:Date.now(),name:nameIn.value.trim()||'Our family',currency:'$'});done(code)}
         catch(e){msg.textContent='Could not create the family. Check the database rules (README, step 1.4).'}
       }},'Start a new family'),
       h('div',{class:'muted',text:'or join one'}),codeIn,
@@ -150,7 +151,7 @@ function gateFamily(FS,fdb,uid){
         var code=codeIn.value.trim().toUpperCase();if(code.length<6){msg.textContent='Type the family code first.';return}
         msg.textContent='Checking…';
         try{var s=await FS.getDoc(FS.doc(fdb,'families',code));if(!s.exists()){msg.textContent='No family found with that code.';return}done(code)}
-        catch(e){msg.textContent='Could not check the code. Try again.'}
+        catch(e){msg.textContent=e&&e.code==='permission-denied'?'Could not join. Check the code, and ask the family owner to add '+email+' in Family & settings.':'Could not check the code. Try again.'}
       }},'Join with a code'),msg]);
   });
 }
@@ -165,16 +166,21 @@ async function connect(){
   var user=await new Promise(function(r){var un=AU.onAuthStateChanged(auth,function(u){un();r(u)})});
   while(!user){user=await gateSignIn(AU,auth);if(user==='local')return false}
   var uref=FS.doc(fdb,'users',user.uid),snap=await FS.getDoc(uref),data=snap.exists()?snap.data():{};
-  var famId=data.familyId;
+  var famId=data.familyId,email=(user.email||'').toLowerCase(),note='';
+  if(famId){
+    // Still on the family's allow-list? (The owner may have removed this email.)
+    try{await FS.getDoc(FS.doc(fdb,'families',famId))}
+    catch(e){if(e&&e.code==='permission-denied'){famId=null;note='You no longer have access to your old family. Ask the owner to add your email again, or start a new family.'}else throw e}
+  }
   if(!famId){
-    famId=await gateFamily(FS,fdb,user.uid);
+    famId=await gateFamily(FS,fdb,user.uid,email,note);
     var idx=Math.floor(Math.random()*EMOJIS.length);
-    data={kind:'profile',name:firstName(user.displayName)||'Me',emoji:EMOJIS[idx],color:COLORS[idx%COLORS.length],familyId:famId,goal:2000,goalSet:false};
+    data=Object.assign({},data,{kind:'profile',name:firstName(user.displayName)||'Me',emoji:EMOJIS[idx],color:COLORS[idx%COLORS.length],familyId:famId,goal:data.goal||2000,goalSet:!!data.goalSet});
     await FS.setDoc(uref,data,{merge:true});
   }
   // members/{uid} is the family-visible copy of the profile (the family list reads from here)
-  await FS.setDoc(FS.doc(fdb,'families',famId,'members',user.uid),{name:data.name||'Me',emoji:data.emoji||EMOJIS[0],color:data.color||COLORS[0],goal:data.goal||2000,goalSet:!!data.goalSet},{merge:true});
-  Store.cloud=true;Store.FS=FS;Store.fdb=fdb;S.mode='cloud';S.uid=user.uid;S.famId=famId;S.auth={signOut:function(){return AU.signOut(auth)}};
+  await FS.setDoc(FS.doc(fdb,'families',famId,'members',user.uid),{name:data.name||'Me',emoji:data.emoji||EMOJIS[0],color:data.color||COLORS[0],goal:data.goal||2000,goalSet:!!data.goalSet,email:email},{merge:true});
+  Store.cloud=true;Store.FS=FS;Store.fdb=fdb;S.mode='cloud';S.uid=user.uid;S.famId=famId;S.email=email;S.auth={signOut:function(){return AU.signOut(auth)}};
   return true;
 }
 async function startStore(){

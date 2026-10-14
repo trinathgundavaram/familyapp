@@ -1,36 +1,60 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Access is by email allow-list: a Google account can see a family's data only if
+    // its email is in families/{code}.allowed. The family code alone is not enough.
     function signedIn() { return request.auth != null; }
+    function verified() {
+      return signedIn() && request.auth.token.email != null && request.auth.token.email_verified == true;
+    }
+    function myEmail() { return request.auth.token.email.lower(); }
+    function fam(code) { return get(/databases/$(database)/documents/families/$(code)).data; }
     function userDoc(uid) { return get(/databases/$(database)/documents/users/$(uid)); }
     function myFamily() { return userDoc(request.auth.uid).data.familyId; }
+    function allowedIn(code) { return verified() && myEmail() in fam(code).allowed; }
     function inFamily(code) {
-      return signedIn()
+      return allowedIn(code)
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && myFamily() == code;
     }
+    function isOwner(code) { return fam(code).owner == request.auth.uid; }
+    function validAllowed(list) { return list is list && list.size() >= 1 && list.size() <= 30; }
 
-    // A family space. Anyone signed in can check a code exists (to join) or create a new family,
-    // but only members can change it or touch anything inside it.
     match /families/{code} {
-      allow get: if signedIn();
-      allow create: if signedIn();
-      allow update: if inFamily(code);
+      // Only people on the list can even see that the family exists.
+      allow get: if verified() && myEmail() in resource.data.allowed;
+      // Anyone can start their own new family, with only themselves on the list.
+      allow create: if verified()
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.allowed == [myEmail()];
+      // Owner manages the list (and must stay on it); others may only change name/currency.
+      allow update: if inFamily(code) && (
+        (resource.data.owner == request.auth.uid
+          && request.resource.data.owner == resource.data.owner
+          && validAllowed(request.resource.data.allowed)
+          && myEmail() in request.resource.data.allowed)
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'currency']));
+
+      // Family-visible profile copy: each person writes only their own; owner can remove people.
+      match /members/{uid} {
+        allow read: if inFamily(code);
+        allow create, update: if inFamily(code) && request.auth.uid == uid;
+        allow delete: if inFamily(code) && (request.auth.uid == uid || isOwner(code));
+      }
+      // All shared family data (tasks, shopping, money, events, ...).
       match /{col}/{id} {
-        allow read, write: if inFamily(code);
+        allow read, write: if col != 'members' && inFamily(code);
       }
     }
 
-    // Personal profile + calorie log. Only you can write; family members can read.
+    // Personal profile + calorie log. Only you can write; your family can read.
     match /users/{uid} {
       allow create, update: if signedIn() && request.auth.uid == uid
-        && exists(/databases/$(database)/documents/families/$(request.resource.data.familyId));
-      allow read: if signedIn() && (request.auth.uid == uid
-        || (resource.data.familyId != null && resource.data.familyId == myFamily()));
+        && allowedIn(request.resource.data.familyId);
+      allow read: if signedIn() && (request.auth.uid == uid || inFamily(resource.data.familyId));
       match /{sub}/{id} {
         allow write: if signedIn() && request.auth.uid == uid;
-        allow read: if signedIn() && (request.auth.uid == uid
-          || userDoc(uid).data.familyId == myFamily());
+        allow read: if signedIn() && (request.auth.uid == uid || inFamily(userDoc(uid).data.familyId));
       }
     }
   }

@@ -383,19 +383,20 @@ function gateSignIn(AU,auth){
       h('button',{class:'btn link',type:'button',onclick:function(){el.remove();res('local')}},'Try it on this device only')]);
   });
 }
-function gateFamily(FS,fdb,uid){
+function gateFamily(FS,fdb,uid,email,note){
   return new Promise(function(res){
     var msg=h('div',{class:'muted small','aria-live':'polite'}),el;
     var codeIn=h('input',{type:'text',placeholder:'Family code',maxlength:'10',autocapitalize:'characters','aria-label':'Family code',style:{textAlign:'center',letterSpacing:'.15em',fontWeight:'700'}});
     var nameIn=h('input',{type:'text',placeholder:'Family name, e.g. The Gundavarams',maxlength:'40','aria-label':'Family name'});
     function done(code){el.remove();res(code)}
     el=gate([h('div',{class:'logo','aria-hidden':'true'},'👨‍👩‍👧'),h('h1',{text:'Set up your family'}),
-      h('p',{class:'muted',text:'Start a new family space, or join one with a code from a family member.'}),
+      note?h('p',{class:'muted small',text:note}):null,
+      h('p',{class:'muted',text:'Start a new family space, or join one with a code from a family member. To join, the family owner must first add your email ('+email+') in Family & settings.'}),
       nameIn,
       h('button',{class:'btn primary wide',type:'button',onclick:async function(){
         var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',code='',buf=new Uint8Array(8);crypto.getRandomValues(buf);for(var i=0;i<8;i++)code+=chars[buf[i]%chars.length];
         msg.textContent='Creating…';
-        try{await FS.setDoc(FS.doc(fdb,'families',code),{owner:uid,created:Date.now(),name:nameIn.value.trim()||'Our family',currency:'$'});done(code)}
+        try{await FS.setDoc(FS.doc(fdb,'families',code),{owner:uid,allowed:[email],created:Date.now(),name:nameIn.value.trim()||'Our family',currency:'$'});done(code)}
         catch(e){msg.textContent='Could not create the family. Check the database rules (README, step 1.4).'}
       }},'Start a new family'),
       h('div',{class:'muted',text:'or join one'}),codeIn,
@@ -403,7 +404,7 @@ function gateFamily(FS,fdb,uid){
         var code=codeIn.value.trim().toUpperCase();if(code.length<6){msg.textContent='Type the family code first.';return}
         msg.textContent='Checking…';
         try{var s=await FS.getDoc(FS.doc(fdb,'families',code));if(!s.exists()){msg.textContent='No family found with that code.';return}done(code)}
-        catch(e){msg.textContent='Could not check the code. Try again.'}
+        catch(e){msg.textContent=e&&e.code==='permission-denied'?'Could not join. Check the code, and ask the family owner to add '+email+' in Family & settings.':'Could not check the code. Try again.'}
       }},'Join with a code'),msg]);
   });
 }
@@ -418,16 +419,21 @@ async function connect(){
   var user=await new Promise(function(r){var un=AU.onAuthStateChanged(auth,function(u){un();r(u)})});
   while(!user){user=await gateSignIn(AU,auth);if(user==='local')return false}
   var uref=FS.doc(fdb,'users',user.uid),snap=await FS.getDoc(uref),data=snap.exists()?snap.data():{};
-  var famId=data.familyId;
+  var famId=data.familyId,email=(user.email||'').toLowerCase(),note='';
+  if(famId){
+    // Still on the family's allow-list? (The owner may have removed this email.)
+    try{await FS.getDoc(FS.doc(fdb,'families',famId))}
+    catch(e){if(e&&e.code==='permission-denied'){famId=null;note='You no longer have access to your old family. Ask the owner to add your email again, or start a new family.'}else throw e}
+  }
   if(!famId){
-    famId=await gateFamily(FS,fdb,user.uid);
+    famId=await gateFamily(FS,fdb,user.uid,email,note);
     var idx=Math.floor(Math.random()*EMOJIS.length);
-    data={kind:'profile',name:firstName(user.displayName)||'Me',emoji:EMOJIS[idx],color:COLORS[idx%COLORS.length],familyId:famId,goal:2000,goalSet:false};
+    data=Object.assign({},data,{kind:'profile',name:firstName(user.displayName)||'Me',emoji:EMOJIS[idx],color:COLORS[idx%COLORS.length],familyId:famId,goal:data.goal||2000,goalSet:!!data.goalSet});
     await FS.setDoc(uref,data,{merge:true});
   }
   // members/{uid} is the family-visible copy of the profile (the family list reads from here)
-  await FS.setDoc(FS.doc(fdb,'families',famId,'members',user.uid),{name:data.name||'Me',emoji:data.emoji||EMOJIS[0],color:data.color||COLORS[0],goal:data.goal||2000,goalSet:!!data.goalSet},{merge:true});
-  Store.cloud=true;Store.FS=FS;Store.fdb=fdb;S.mode='cloud';S.uid=user.uid;S.famId=famId;S.auth={signOut:function(){return AU.signOut(auth)}};
+  await FS.setDoc(FS.doc(fdb,'families',famId,'members',user.uid),{name:data.name||'Me',emoji:data.emoji||EMOJIS[0],color:data.color||COLORS[0],goal:data.goal||2000,goalSet:!!data.goalSet,email:email},{merge:true});
+  Store.cloud=true;Store.FS=FS;Store.fdb=fdb;S.mode='cloud';S.uid=user.uid;S.famId=famId;S.email=email;S.auth={signOut:function(){return AU.signOut(auth)}};
   return true;
 }
 async function startStore(){
@@ -826,6 +832,34 @@ function pageFamily(el){
     if(navigator.share){navigator.share({title:'Join our family on Nourish',text:inviteText()}).catch(function(){})}
     else if(navigator.clipboard){navigator.clipboard.writeText(inviteText()).then(function(){toast('Invite copied. Paste it in a message.')},function(){toast('Could not copy. Share the code by message.')})}
   }
+  function allowCard(){
+    var isOwner=S.fam.owner===S.uid,list=(S.fam.allowed||[]).slice();
+    var c=h('section',{class:'card'});
+    c.append(h('h2',{text:'Who can join'}),h('p',{class:'muted small',text:isOwner?'Only these Google accounts can see your family’s data. Removing an email takes away access right away.':'Only these Google accounts can see your family’s data. The family owner manages this list.'}));
+    var l=h('div',{class:'list'});
+    list.forEach(function(em){
+      l.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:em}),h('small',{text:em===S.email?'You':((S.members[S.fam.owner]||{}).email===em?'Owner':'Can join')})),
+        isOwner&&em!==S.email?h('button',{class:'btn sm ghost danger',type:'button','aria-label':'Remove '+em,onclick:function(){
+          if(!confirm('Remove '+em+'? They will lose access to all family data.'))return;
+          saveFam({allowed:list.filter(function(x){return x!==em})}).then(function(){
+            memberList().forEach(function(x){if(x.email===em)Store.FS.deleteDoc(Store.FS.doc(Store.fdb,'families',S.famId,'members',x.id)).catch(function(){})});
+            toast('Removed '+em);
+          },function(){toast('Could not remove. Try again.')});
+        }},'Remove'):null));
+    });
+    c.append(l);
+    if(isOwner){
+      var inp=h('input',{type:'email',placeholder:'name@gmail.com',autocapitalize:'none','aria-label':'Email to allow'});
+      c.append(h('div',{class:'row'},h('div',{class:'grow'},inp),h('button',{class:'btn primary',type:'button',onclick:function(){
+        var em=inp.value.trim().toLowerCase();
+        if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){toast('Type a full email address.');return}
+        if(list.indexOf(em)>=0){toast('Already on the list.');return}
+        if(list.length>=30){toast('The list is full (30).');return}
+        saveFam({allowed:list.concat([em])}).then(function(){inp.value='';toast('Added '+em+'. Now send them the invite.')},function(){toast('Could not add. Try again.')});
+      }},'Add')));
+    }
+    return c;
+  }
   var built=false;
   return function upd(){
     if(built&&document.activeElement&&document.activeElement.tagName==='INPUT'&&wrap.contains(document.activeElement))return;
@@ -848,9 +882,10 @@ function pageFamily(el){
     c.append(l);wrap.append(c);
 
     if(S.mode==='cloud'){
-      c=h('section',{class:'card'});c.append(h('h2',{text:'Invite family'}),h('p',{class:'muted small',text:'Send the app link and this code. They sign in with Google and choose “Join with a code”. Anyone with the code can join, so only share it with family.'}),
+      c=h('section',{class:'card'});c.append(h('h2',{text:'Invite family'}),h('p',{class:'muted small',text:'1. Add their Google email under “Who can join” below. 2. Send the app link and this code. They sign in with Google and choose “Join with a code”. The code only works for emails on the list.'}),
         h('div',{class:'code',text:S.famId}),h('button',{class:'btn primary wide',type:'button',onclick:share},'Share invite'));
       wrap.append(c);
+      wrap.append(allowCard());
     }else{
       wrap.append(h('section',{class:'card'},h('h2',{text:'Family sharing is off'}),h('p',{class:'muted small',text:'Right now everything stays on this device. Finish the one-time setup in the README (about 15 minutes) and this page will show your invite code.'})));
     }

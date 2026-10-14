@@ -205,6 +205,34 @@ function pageFamily(el){
     if(navigator.share){navigator.share({title:'Join our family on Nourish',text:inviteText()}).catch(function(){})}
     else if(navigator.clipboard){navigator.clipboard.writeText(inviteText()).then(function(){toast('Invite copied. Paste it in a message.')},function(){toast('Could not copy. Share the code by message.')})}
   }
+  function allowCard(){
+    var isOwner=S.fam.owner===S.uid,list=(S.fam.allowed||[]).slice();
+    var c=h('section',{class:'card'});
+    c.append(h('h2',{text:'Who can join'}),h('p',{class:'muted small',text:isOwner?'Only these Google accounts can see your family’s data. Removing an email takes away access right away.':'Only these Google accounts can see your family’s data. The family owner manages this list.'}));
+    var l=h('div',{class:'list'});
+    list.forEach(function(em){
+      l.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:em}),h('small',{text:em===S.email?'You':((S.members[S.fam.owner]||{}).email===em?'Owner':'Can join')})),
+        isOwner&&em!==S.email?h('button',{class:'btn sm ghost danger',type:'button','aria-label':'Remove '+em,onclick:function(){
+          if(!confirm('Remove '+em+'? They will lose access to all family data.'))return;
+          saveFam({allowed:list.filter(function(x){return x!==em})}).then(function(){
+            memberList().forEach(function(x){if(x.email===em)Store.FS.deleteDoc(Store.FS.doc(Store.fdb,'families',S.famId,'members',x.id)).catch(function(){})});
+            toast('Removed '+em);
+          },function(){toast('Could not remove. Try again.')});
+        }},'Remove'):null));
+    });
+    c.append(l);
+    if(isOwner){
+      var inp=h('input',{type:'email',placeholder:'name@gmail.com',autocapitalize:'none','aria-label':'Email to allow'});
+      c.append(h('div',{class:'row'},h('div',{class:'grow'},inp),h('button',{class:'btn primary',type:'button',onclick:function(){
+        var em=inp.value.trim().toLowerCase();
+        if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){toast('Type a full email address.');return}
+        if(list.indexOf(em)>=0){toast('Already on the list.');return}
+        if(list.length>=30){toast('The list is full (30).');return}
+        saveFam({allowed:list.concat([em])}).then(function(){inp.value='';toast('Added '+em+'. Now send them the invite.')},function(){toast('Could not add. Try again.')});
+      }},'Add')));
+    }
+    return c;
+  }
   var built=false;
   return function upd(){
     if(built&&document.activeElement&&document.activeElement.tagName==='INPUT'&&wrap.contains(document.activeElement))return;
@@ -227,9 +255,10 @@ function pageFamily(el){
     c.append(l);wrap.append(c);
 
     if(S.mode==='cloud'){
-      c=h('section',{class:'card'});c.append(h('h2',{text:'Invite family'}),h('p',{class:'muted small',text:'Send the app link and this code. They sign in with Google and choose “Join with a code”. Anyone with the code can join, so only share it with family.'}),
+      c=h('section',{class:'card'});c.append(h('h2',{text:'Invite family'}),h('p',{class:'muted small',text:'1. Add their Google email under “Who can join” below. 2. Send the app link and this code. They sign in with Google and choose “Join with a code”. The code only works for emails on the list.'}),
         h('div',{class:'code',text:S.famId}),h('button',{class:'btn primary wide',type:'button',onclick:share},'Share invite'));
       wrap.append(c);
+      wrap.append(allowCard());
     }else{
       wrap.append(h('section',{class:'card'},h('h2',{text:'Family sharing is off'}),h('p',{class:'muted small',text:'Right now everything stays on this device. Finish the one-time setup in the README (about 15 minutes) and this page will show your invite code.'})));
     }
