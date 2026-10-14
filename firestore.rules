@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userDoc(uid) { return get(/databases/$(database)/documents/users/$(uid)); }
+    function myFamily() { return userDoc(request.auth.uid).data.familyId; }
+    function inFamily(code) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && myFamily() == code;
+    }
+
+    // A family space. Anyone signed in can check a code exists (to join) or create a new family,
+    // but only members can change it or touch anything inside it.
+    match /families/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn();
+      allow update: if inFamily(code);
+      match /{col}/{id} {
+        allow read, write: if inFamily(code);
+      }
+    }
+
+    // Personal profile + calorie log. Only you can write; family members can read.
+    match /users/{uid} {
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && exists(/databases/$(database)/documents/families/$(request.resource.data.familyId));
+      allow read: if signedIn() && (request.auth.uid == uid
+        || (resource.data.familyId != null && resource.data.familyId == myFamily()));
+      match /{sub}/{id} {
+        allow write: if signedIn() && request.auth.uid == uid;
+        allow read: if signedIn() && (request.auth.uid == uid
+          || userDoc(uid).data.familyId == myFamily());
+      }
+    }
+  }
+}
