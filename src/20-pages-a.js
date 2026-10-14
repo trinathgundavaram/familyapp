@@ -1,6 +1,6 @@
 /* ================= calendar data ================= */
 var KINDS=[['event','Event','📌'],['appt','Appointment','🩺'],['school','School','🎒'],['work','Work','💼'],['activity','Activity','⚽'],['birthday','Birthday','🎂']];
-var KIND_COLOR={event:'#4F46E5',appt:'#EF4444',school:'#F59E0B',work:'#0EA5E9',activity:'#10B981',birthday:'#EC4899'};
+var KIND_COLOR={event:'#00A884',appt:'#EF4444',school:'#F59E0B',work:'#0EA5E9',activity:'#10B981',birthday:'#EC4899'};
 function kindIcon(k){var x=KINDS.filter(function(a){return a[0]===k})[0];return x?x[2]:'📌'}
 function occurs(ev,date){
   if(!ev.date||date<ev.date)return false;
@@ -61,7 +61,7 @@ function pageHome(el){
   var head=h('div',{class:'hero'}),quick=h('div',{class:'quick'}),grid=h('div',{class:'grid g2'});
   el.append(head,quick,grid);
   [['📌','Event',function(){eventForm()}],['✅','Task',function(){taskForm()}],['🛒','Shopping',function(){shopQuick()}],['💸','Expense',function(){txnForm(null,{type:'expense'})}],['🥗','Food',function(){go('food')}]].forEach(function(q){
-    quick.append(h('button',{type:'button',onclick:q[2]},h('span',{text:q[0]}),q[1]));
+    quick.append(h('button',{type:'button',onclick:q[2]},h('span',{class:'qi'},ico(q[0])),q[1]));
   });
   function card(){var c=h('section',{class:'card'});grid.append(c);return c}
   return function upd(){
@@ -132,7 +132,7 @@ function pageMore(el){
   el.append(pageHead('More'));
   var g=h('div',{class:'grid g2'});el.append(g);
   [['timetable','🗓️','Timetable','School, work and activity schedule','--c-time'],['food','🥗','Calories','Track what you eat','--c-food'],['trips','✈️','Trips','Plan holidays, packing, bookings','--c-trips'],['meals','🍽️','Meal plan','Plan the week and shop for it','--c-meals'],['notes','📒','Family info','Wi-Fi, doctors, school, emergency numbers','--c-notes'],['shop','🛒','Shopping','Shared shopping lists','--c-shop'],['family','⚙️','Family & settings','Members, invite code, preferences','--c-family']].forEach(function(r){
-    g.append(h('button',{class:'card tap',type:'button',onclick:function(){go(r[0])}},h('div',{class:'chead'},h('span',{class:'ico',style:{background:'var('+r[4]+')'},'aria-hidden':'true'},r[1]),h('div',{class:'grow'},h('h2',{text:r[2]}),h('div',{class:'muted small',text:r[3]})))));
+    g.append(h('button',{class:'card tap',type:'button',onclick:function(){go(r[0])}},h('div',{class:'chead'},icoTile(r[1],'var('+r[4]+')'),h('div',{class:'grow'},h('h2',{text:r[2]}),h('div',{class:'muted small',text:r[3]})),h('span',{class:'chev','aria-hidden':'true'},'›'))));
   });
 }
 
@@ -142,7 +142,7 @@ function pageCal(el){
   var nav=monthNav(function(){return mk},function(v){mk=v;if(monthKey(sel)!==mk)sel=mk+'-01';upd()});
   var grid=h('div',{class:'mgrid'}),dayCard=h('section',{class:'card'}),filt=h('div');
   var add=fab('Event',function(){eventForm(null,{date:sel})});
-  el.append(pageHead('Calendar',null,[h('button',{class:'btn sm',type:'button',onclick:function(){go('timetable')}},'🗓️ Timetable')]),filt,
+  el.append(pageHead('Calendar',null,[h('button',{class:'btn sm',type:'button',onclick:function(){go('timetable')}},ico('clock'),'Timetable')]),filt,
     h('div',{class:'card'},nav,grid),dayCard,add);
   function upd(){
     nav.upd();
@@ -291,7 +291,7 @@ function pageFamily(el){
     wrap.append(c);
 
     c=h('section',{class:'card'});c.append(h('h2',{text:'Your data'}));
-    c.append(h('button',{class:'btn wide',type:'button',onclick:exportAll},'⬇️ Download everything (backup)'));
+    c.append(h('button',{class:'btn wide',type:'button',onclick:exportAll},ico('download'),'Download everything (backup)'));
     if(S.mode==='cloud')c.append(h('button',{class:'btn ghost wide danger',type:'button',onclick:function(){S.auth.signOut().then(function(){location.reload()})}},'Sign out'));
     wrap.append(c);
   };
@@ -351,7 +351,7 @@ function pagePerson(el,param){
       }},'Edit'))));
     INFO_SECTIONS.forEach(function(sec){
       var c=h('section',{class:'card'}),l=h('div',{class:'list'}),any=false;
-      c.append(h('div',{class:'row'},h('h2',{class:'grow',text:sec.icon+' '+sec.title}),h('button',{class:'btn sm',type:'button','aria-label':'Edit '+sec.title,onclick:function(){
+      c.append(h('div',{class:'row'},h('div',{class:'chead grow'},icoTile(sec.icon,'var(--brand)'),h('h2',{text:sec.title})),h('button',{class:'btn sm',type:'button','aria-label':'Edit '+sec.title,onclick:function(){
         var vals={};sec.fields.forEach(function(f){vals[f.k]=info[f.k]==null?(f.type==='select'?'':''):info[f.k]});
         openForm({title:sec.title+' — '+nameOf(uid),values:vals,fields:sec.fields.map(function(f){return Object.assign({},f)}),
           save:function(v){
@@ -369,6 +369,6 @@ function pagePerson(el,param){
       c.append(any?l:h('div',{class:'muted small',text:'Nothing added yet. Tap Edit to add.'}));
       wrap.append(c);
     });
-    if(S.mode==='cloud')wrap.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){go('food',uid)}},'🥗 Open '+(isMe?'my':nameOf(uid)+'’s')+' calorie log'));
+    if(S.mode==='cloud')wrap.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){go('food',uid)}},ico('apple'),'Open '+(isMe?'my':nameOf(uid)+'’s')+' calorie log'));
   };
 }

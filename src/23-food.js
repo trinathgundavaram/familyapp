@@ -253,7 +253,7 @@ function pageFood(el,param){
   var seg=segControl([['day','Day'],['week','Week'],['fam','Family']],tab,function(v){tab=v;upd()});
   var body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var banner=h('div',{class:'card',style:{background:'var(--ink)',color:'var(--bg)'},hidden:true});
-  el.append(pageHead('Calories',null,[h('button',{class:'btn sm',type:'button',onclick:function(){goalSheet(view)}},'🎯 Goal')]),seg,banner,body,fab('Add food',function(){openAddFood(date,null,view)}));
+  el.append(pageHead('Calories',null,[h('button',{class:'btn sm',type:'button',onclick:function(){goalSheet(view)}},ico('target'),'Goal')]),seg,banner,body,fab('Add food',function(){openAddFood(date,null,view)}));
   function ro(){return false} // everyone in the family can edit any log
   function dateBar(){
     return h('div',{class:'card',style:{padding:'8px',flexDirection:'row',alignItems:'center'}},

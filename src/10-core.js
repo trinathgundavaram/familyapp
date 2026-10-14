@@ -47,7 +47,7 @@ function greet(){var hh=new Date().getHours();return hh<5?'Good night':hh<12?'Go
 /* ================= state ================= */
 var S={mode:'local',uid:'local',fam:{currency:'$',name:'Our family'},famId:null,members:{},ready:false,auth:null};
 var EMOJIS=['🦊','🐼','🐯','🐸','🦉','🐙','🦄','🐻','🐶','🐱','🦁','🐧'];
-var COLORS=['#4F46E5','#EF4444','#10B981','#F59E0B','#0EA5E9','#EC4899','#8B5CF6','#14B8A6'];
+var COLORS=['#00A884','#EF4444','#10B981','#F59E0B','#0EA5E9','#EC4899','#8B5CF6','#14B8A6'];
 function me(){return S.members[S.uid]||{name:'Me',emoji:'🦊',color:COLORS[0]}}
 function memberList(){return Object.keys(S.members).map(function(id){return Object.assign({id:id},S.members[id])}).sort(function(a,b){return (a.name||'').localeCompare(b.name||'')})}
 function nameOf(uid){var m=S.members[uid];return uid===S.uid?(m&&m.name)||'Me':(m&&m.name)||'Family'}
@@ -127,7 +127,7 @@ function gate(content){var el=h('div',{class:'gate'},h('div',{class:'gatecard'},
 function gateSignIn(AU,auth){
   return new Promise(function(res){
     var msg=h('div',{class:'muted small','aria-live':'polite'});
-    var el=gate([h('div',{class:'logo','aria-hidden':'true'},'🏡'),h('h1',{text:'Welcome to Nourish'}),
+    var el=gate([h('div',{class:'logo','aria-hidden':'true'},ico('home')),h('h1',{text:'Welcome to Nourish'}),
       h('p',{class:'muted',text:'One home for your family: calendar, chores, shopping, budget, trips and more.'}),
       h('button',{class:'btn primary wide',type:'button',onclick:async function(){
         msg.textContent='Opening Google…';
@@ -143,7 +143,7 @@ function gateFamily(FS,fdb,uid,email,note){
     var codeIn=h('input',{type:'text',placeholder:'Family code',maxlength:'10',autocapitalize:'characters','aria-label':'Family code',style:{textAlign:'center',letterSpacing:'.15em',fontWeight:'700'}});
     var nameIn=h('input',{type:'text',placeholder:'Family name, e.g. The Gundavarams',maxlength:'40','aria-label':'Family name'});
     function done(code){el.remove();res(code)}
-    el=gate([h('div',{class:'logo','aria-hidden':'true'},'👨‍👩‍👧'),h('h1',{text:'Set up your family'}),
+    el=gate([h('div',{class:'logo','aria-hidden':'true'},ico('users')),h('h1',{text:'Set up your family'}),
       note?h('p',{class:'muted small',text:note}):null,
       h('p',{class:'muted',text:'Start a new family space, or join one with a code from a family member. To join, the family owner must first add your email ('+email+') in Family & settings.'}),
       nameIn,
@@ -328,15 +328,60 @@ function segControl(opts,value,onChange){
   function draw(){wrap.replaceChildren();opts.forEach(function(o){wrap.append(h('button',{type:'button','aria-pressed':o[0]===value?'true':'false',onclick:function(){value=o[0];draw();onChange(value)}},o[1]))})}
   draw();return wrap;
 }
-function emptyState(icon,text,btn){return h('div',{class:'empty'},h('span',{class:'big',text:icon}),text,btn?h('div',{style:{marginTop:'10px'}},btn):null)}
+var EMPTY_IC={'☀️':'calendar','🌤️':'calendar','📆':'calendar','🍳':'utensils','🎉':'star','🎫':'idcard','🎯':'target','🏖️':'suitcase','🗺️':'suitcase','🧳':'suitcase','💡':'book','📒':'book','🛒':'cart','🧺':'cart','🧾':'receipt','🤷':'search'};
+function emptyState(icon,text,btn){return h('div',{class:'empty'},h('span',{class:'big'},ico(EMPTY_IC[icon]||icon)),text,btn?h('div',{style:{marginTop:'10px'}},btn):null)}
 function monthNav(get,set){
   var lbl=h('div',{class:'grow',style:{textAlign:'center',fontWeight:'800'}});
   var w=h('div',{class:'row'},h('button',{class:'ibtn plain',type:'button','aria-label':'Previous month',onclick:function(){set(addMonths(get(),-1))}},'‹'),lbl,h('button',{class:'ibtn plain',type:'button','aria-label':'Next month',onclick:function(){set(addMonths(get(),1))}},'›'));
   w.upd=function(){lbl.textContent=monthLabel(get())};return w;
 }
-function fab(label,fn){return h('button',{class:'fab',type:'button',onclick:fn},h('span',{text:'+'}),label)}
+function fab(label,fn){return h('button',{class:'fab',type:'button',onclick:fn},ico('plus'),label)}
+
+/* line icons (24px, stroke = currentColor). Emoji keys map the old emoji to an icon. */
+var ICONS={
+  home:'<path d="M3.5 10.2 12 3.5l8.5 6.7V19a1.5 1.5 0 0 1-1.5 1.5h-4.2v-6h-5.6v6H5A1.5 1.5 0 0 1 3.5 19z"/>',
+  calendar:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  tasks:'<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8.2 12.2 2.6 2.6 5-5.6"/>',
+  cart:'<circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17.5" cy="19.5" r="1.4"/><path d="M2.5 3.5h2.8l2.4 11.5h11l2-8H6.3"/>',
+  wallet:'<path d="M19.5 8V5.5H6a2.5 2.5 0 0 0 0 5"/><path d="M3.5 8v10A2.5 2.5 0 0 0 6 20.5h14.5v-10H6A2.5 2.5 0 0 1 3.5 8"/><circle cx="16.5" cy="15.5" r="1" fill="currentColor" stroke="none"/>',
+  receipt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  apple:'<path d="M12 7.2c-1.6-1.4-7-1.6-7 4.3 0 4.2 2.8 9 5 9 .9 0 1.2-.5 2-.5s1.1.5 2 .5c2.2 0 5-4.8 5-9 0-5.9-5.4-5.7-7-4.3z"/><path d="M12 7.2c0-2.2 1.2-3.7 3.2-4.2"/>',
+  suitcase:'<rect x="3.5" y="7" width="17" height="13.5" rx="2.5"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7M8 7v13.5M16 7v13.5"/>',
+  utensils:'<path d="M7 3v18M4 3v5a3 3 0 0 0 6 0V3M17.5 21V3c-2.2 0-4 2.3-4 6.5V14h4"/>',
+  book:'<path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h12.5v15H7a2.5 2.5 0 0 0-2.5 2.5z"/><path d="M4.5 20.5A2.5 2.5 0 0 1 7 18h12.5v3H7M9 7.5h6.5"/>',
+  sliders:'<path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M15.5 4.6a3.5 3.5 0 0 1 0 6.8M17.8 14.3c2.2.6 3.7 2.8 3.7 5.7"/>',
+  more:'<circle cx="5.5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  pin:'<path d="M12 21s-6.8-6.2-6.8-11.6a6.8 6.8 0 0 1 13.6 0C18.8 14.8 12 21 12 21z"/><circle cx="12" cy="9.4" r="2.4"/>',
+  star:'<path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>',
+  idcard:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.5-1.4 1.6-2 3-2s2.5.6 3 2M14.5 10h4M14.5 13.5h3"/>',
+  heart:'<path d="M20.4 5.9a4.9 4.9 0 0 0-7.4 0L12 7l-1-1.1a4.9 4.9 0 0 0-7.4 6.4L12 20.5l8.4-8.2a4.9 4.9 0 0 0 0-6.4z"/>',
+  briefcase:'<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7M3 13h18"/>',
+  shirt:'<path d="M8.5 3.5 3.5 6l-1 4.5 3 1V20.5h13v-9l3-1-1-4.5-5-2.5c-.4 1.5-1.8 2.5-3.5 2.5S8.9 5 8.5 3.5z"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+  download:'<path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M4.5 19.5h15"/>',
+  target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>'
+};
+var EMO2IC={'🏠':'home','🏡':'home','📅':'calendar','🗓️':'clock','✅':'tasks','🛒':'cart','💰':'wallet','💸':'receipt','🥗':'apple','✈️':'suitcase','🍽️':'utensils','📒':'book','⚙️':'sliders','⋯':'more','📌':'pin','🎉':'star','🪪':'idcard','🩺':'heart','💼':'briefcase','👕':'shirt','👨‍👩‍👧':'users','🎯':'target','+':'plus'};
+function ico(x,size){
+  var k=ICONS[x]?x:EMO2IC[x];if(!k)return document.createTextNode(x==null?'':String(x));
+  var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.setAttribute('viewBox','0 0 24 24');s.setAttribute('class','svgi');s.setAttribute('aria-hidden','true');
+  if(size){s.setAttribute('width',size);s.setAttribute('height',size)}
+  s.innerHTML=ICONS[k];return s;
+}
+// Calendar icon that shows today's day number
+function calIcon(){
+  var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.setAttribute('viewBox','0 0 24 24');s.setAttribute('class','svgi cal');s.setAttribute('aria-hidden','true');
+  s.innerHTML='<rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M8 2.8v3.4M16 2.8v3.4M3.5 9h17"/><text x="12" y="18.2" text-anchor="middle">'+new Date().getDate()+'</text>';
+  return s;
+}
+function icoTile(icon,color){var t=h('span',{class:'ico','aria-hidden':'true'},ico(icon));t.style.setProperty('--ac',color);return t}
 function cardHead(icon,color,title,moreLabel,moreFn){
-  return h('div',{class:'chead'},h('span',{class:'ico',style:{background:color},'aria-hidden':'true'},icon),h('h2',{text:title}),moreFn?h('button',{class:'more',type:'button',onclick:moreFn},moreLabel||'See all'):null);
+  return h('div',{class:'chead'},icoTile(icon,color),h('h2',{text:title}),moreFn?h('button',{class:'more',type:'button',onclick:moreFn},moreLabel||'See all'):null);
 }
 function donut(parts,total,centerTop,centerBottom){
   var r=52,C=2*Math.PI*r,off=0,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -366,15 +411,27 @@ function navigate(){
   var inTab={home:'home',cal:'cal',timetable:'cal',tasks:'tasks',shop:'tasks',money:'money'}[r]||'more';
   $$('.tab').forEach(function(b){b.setAttribute('aria-current',b.dataset.tab===inTab?'page':'false')});
   $$('.navi').forEach(function(b){b.setAttribute('aria-current',b.dataset.route===r?'page':'false')});
+  updCalTab();
   window.scrollTo(0,0);
+}
+// Calendar tab shows today's date (e.g. "Wed 14") until you are on the Calendar, then "Calendar".
+function updCalTab(){
+  var d=new Date(),onCal=App.cur==='cal'||App.cur==='timetable';
+  $$('.tab[data-tab="cal"],.navi[data-route="cal"]').forEach(function(b){
+    var ic=b.querySelector('.ic');if(ic&&ic.textContent!==String(d.getDate()))ic.replaceChildren(calIcon());
+    var tl=b.querySelector('.tl');if(tl)tl.textContent=onCal?'Calendar':d.toLocaleDateString(undefined,{weekday:'short'})+' '+d.getDate();
+    b.setAttribute('aria-label','Calendar, today is '+d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}));
+  });
 }
 function buildShell(){
   var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['timetable','Timetable','🗓️'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['food','Calories','🥗'],['trips','Trips','✈️'],['meals','Meal plan','🍽️'],['notes','Family info','📒']];
   var side=$('#side');
-  side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},'🏡'),h('b',{text:'Nourish',style:{fontSize:'1.2rem'}})));
-  nav.forEach(function(n){side.append(h('button',{class:'navi',type:'button','data-route':n[0],onclick:function(){go(n[0])}},h('span',{class:'ic'},n[2]),n[1]))});
+  side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},ico('home')),h('div',null,h('b',{text:'Nourish'}),h('small',{text:'Family hub'}))));
+  nav.forEach(function(n){side.append(h('button',{class:'navi',type:'button','data-route':n[0],onclick:function(){go(n[0])}},h('span',{class:'ic'},n[0]==='cal'?calIcon():ico(n[2])),n[1]))});
   side.append(h('div',{class:'navsp'}));
-  side.append(h('button',{class:'navi',type:'button','data-route':'family',onclick:function(){go('family')}},h('span',{class:'ic'},'⚙️'),'Family & settings'));
+  side.append(h('button',{class:'navi',type:'button','data-route':'family',onclick:function(){go('family')}},h('span',{class:'ic'},ico('sliders')),'Family & settings'));
   var tabs=[['home','Home','🏠','home'],['cal','Calendar','📅','cal'],['tasks','Lists','✅','tasks'],['money','Money','💰','money'],['more','More','⋯','more']];
-  tabs.forEach(function(t){$('#tabbar').append(h('button',{class:'tab',type:'button','data-tab':t[0],onclick:function(){go(t[3])}},h('span',{class:'ic'},t[2]),t[1]))});
+  tabs.forEach(function(t){$('#tabbar').append(h('button',{class:'tab',type:'button','data-tab':t[0],onclick:function(){go(t[3])}},h('span',{class:'ic'},t[0]==='cal'?calIcon():ico(t[2])),h('span',{class:'tl',text:t[1]})))});
+  // keep the date on the Calendar tab current (midnight, returning to the app)
+  setInterval(updCalTab,60000);document.addEventListener('visibilitychange',function(){if(!document.hidden)updCalTab()});
 }

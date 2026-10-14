@@ -59,7 +59,7 @@ function pageMoney(el){
   var nav=monthNav(function(){return mk},function(v){mk=v;upd()});
   var body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var seg=segControl([['ov','Overview'],['tx','Activity'],['bills','Bills'],['goals','Goals']],view,function(v){view=v;upd()});
-  el.append(pageHead('Money',null,[h('button',{class:'btn sm',type:'button',onclick:function(){downloadTxns()}},'⬇️ CSV')]),seg,nav,body,fab('Add',function(){txnForm()}));
+  el.append(pageHead('Money',null,[h('button',{class:'btn sm',type:'button',onclick:function(){downloadTxns()}},ico('download'),'CSV')]),seg,nav,body,fab('Add',function(){txnForm()}));
   function downloadTxns(){
     var rows=[['date','type','category','amount','who','note']];
     col('txns').items.slice().sort(function(a,b){return a.date<b.date?-1:1}).forEach(function(x){rows.push([x.date,x.type,catInfo(x.cat,x.type)[1],x.amount,nameOf(x.who),x.note||''])});
