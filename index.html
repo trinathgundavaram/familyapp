@@ -630,6 +630,50 @@ button.item:hover,.item:hover{background:var(--panel-2)}
 details.card>summary{min-height:32px}
 .shoplist.home{columns:1!important}
 
+/* =====================================================================
+   v6: comfortable, centered layout (don't stretch to fill the screen)
+   ===================================================================== */
+@media (min-width:900px){
+  .page,.page.wide{max-width:1040px}
+  .page.wide.calpage{max-width:1120px}
+  .main{padding:32px 40px 64px}
+  .phead h1{font-size:2rem}
+  .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .shoplist{columns:2!important}
+  .shoplist.home{columns:1!important}
+}
+@media (min-width:1100px){
+  .cols{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+}
+@media (min-width:1500px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+
+/* tighter rhythm */
+.page{gap:12px}
+.card,.grid>.card,.cols>.card{padding:14px 16px;gap:8px;border-radius:18px}
+.grid{gap:12px!important}
+.hero{padding:20px 20px;border-radius:20px}
+.hero h1{font-size:1.5rem}
+.quick{padding:8px 0 4px}
+.quick .qi{width:48px;height:48px}
+.quick button{font-size:.72rem}
+.item{min-height:44px;padding:7px 10px}
+.chead .ico{width:30px;height:30px}
+.chead .ico .svgi{width:17px;height:17px}
+.card h2,.chead h2{font-size:1rem}
+.phead{padding:4px 0 6px}
+.phead h1{font-size:1.75rem}
+@media (min-width:900px){.phead h1{font-size:2rem}}
+.empty{padding:10px 8px}
+.empty .big{width:44px;height:44px;margin-bottom:6px}
+@media (min-width:900px){
+  .quick{display:flex;justify-content:flex-start;gap:28px;padding:10px 4px 6px}
+  .quick button{width:72px}
+  .homegrid{display:block!important;columns:2;column-gap:12px}
+  .homegrid>.card{break-inside:avoid;margin-bottom:12px;display:flex}
+}
+.cols>.kpis{background:var(--panel);border-radius:18px;padding:12px!important}
+.cols>.kpis .kpi{background:var(--panel-2)}
+
 </style>
 </head>
 <body>
@@ -1153,7 +1197,7 @@ function evRow(e,opts){
 
 /* ================= HOME ================= */
 function pageHome(el){
-  var head=h('div',{class:'hero'}),quick=h('div',{class:'quick'}),grid=h('div',{class:'grid g2'});
+  var head=h('div',{class:'hero'}),quick=h('div',{class:'quick'}),grid=h('div',{class:'grid g2 homegrid'});
   el.append(head,quick,grid);
   [['📌','Event',function(){eventForm()}],['✅','Task',function(){taskForm()}],['🛒','Shopping',function(){shopQuick()}],['💸','Expense',function(){txnForm(null,{type:'expense'})}],['🥗','Food',function(){go('food')}]].forEach(function(q){
     quick.append(h('button',{type:'button',onclick:q[2]},h('span',{class:'qi'},ico(q[0])),q[1]));
@@ -1228,6 +1272,7 @@ function pageCal(el,startView){
   var sel=today(),mk=monthKey(sel),who='',view=startView||LSget('nourish2:calview','week');
   var DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var head=h('div'),seg=h('div'),filt=h('div'),bar=h('div',{class:'calbar'}),body=h('div',{class:'calbody'});
+  el.classList.add('calpage');
   el.append(head,seg,filt,bar,body,fab('Add',function(){eventForm(null,{date:sel})}));
   function setView(v){view=v;LSset('nourish2:calview',v);upd()}
   function wkStart(d){return weekStart(d)} // Monday

@@ -1,5 +1,5 @@
 // Simple offline cache: network first, fall back to the last saved copy.
-const CACHE='nourish-v10';
+const CACHE='nourish-v11';
 self.addEventListener('install',e=>{self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
 self.addEventListener('fetch',e=>{

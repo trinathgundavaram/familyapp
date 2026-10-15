@@ -59,7 +59,7 @@ function evRow(e,opts){
 
 /* ================= HOME ================= */
 function pageHome(el){
-  var head=h('div',{class:'hero'}),quick=h('div',{class:'quick'}),grid=h('div',{class:'grid g2'});
+  var head=h('div',{class:'hero'}),quick=h('div',{class:'quick'}),grid=h('div',{class:'grid g2 homegrid'});
   el.append(head,quick,grid);
   [['📌','Event',function(){eventForm()}],['✅','Task',function(){taskForm()}],['🛒','Shopping',function(){shopQuick()}],['💸','Expense',function(){txnForm(null,{type:'expense'})}],['🥗','Food',function(){go('food')}]].forEach(function(q){
     quick.append(h('button',{type:'button',onclick:q[2]},h('span',{class:'qi'},ico(q[0])),q[1]));
@@ -134,6 +134,7 @@ function pageCal(el,startView){
   var sel=today(),mk=monthKey(sel),who='',view=startView||LSget('nourish2:calview','week');
   var DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var head=h('div'),seg=h('div'),filt=h('div'),bar=h('div',{class:'calbar'}),body=h('div',{class:'calbody'});
+  el.classList.add('calpage');
   el.append(head,seg,filt,bar,body,fab('Add',function(){eventForm(null,{date:sel})}));
   function setView(v){view=v;LSset('nourish2:calview',v);upd()}
   function wkStart(d){return weekStart(d)} // Monday
