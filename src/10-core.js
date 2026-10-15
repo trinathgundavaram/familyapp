@@ -127,7 +127,7 @@ function gate(content){var el=h('div',{class:'gate'},h('div',{class:'gatecard'},
 function gateSignIn(AU,auth){
   return new Promise(function(res){
     var msg=h('div',{class:'muted small','aria-live':'polite'});
-    var el=gate([h('div',{class:'logo','aria-hidden':'true'},ico('home')),h('h1',{text:'Welcome to Nourish'}),
+    var el=gate([h('div',{class:'logo','aria-hidden':'true'},ico('home')),h('h1',{text:'Welcome to Gundavaram'}),
       h('p',{class:'muted',text:'One home for your family: calendar, chores, shopping, budget, trips and more.'}),
       h('button',{class:'btn primary wide',type:'button',onclick:async function(){
         msg.textContent='Opening Google…';
@@ -436,7 +436,7 @@ function updCalTab(){
 function buildShell(){
   var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['timetable','Timetable','🗓️'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['house','Household','🔑'],['food','Calories','🥗'],['trips','Trips','✈️'],['meals','Meal plan','🍽️'],['notes','Family info','📒']];
   var side=$('#side');
-  side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},ico('home')),h('div',null,h('b',{text:'Nourish'}),h('small',{text:'Family hub'}))));
+  side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},ico('home')),h('div',null,h('b',{text:'Gundavaram'}),h('small',{text:'Family hub'}))));
   nav.forEach(function(n){side.append(h('button',{class:'navi',type:'button','data-route':n[0],onclick:function(){go(n[0])}},h('span',{class:'ic'},n[0]==='cal'?calIcon():ico(n[2])),n[1]))});
   side.append(h('div',{class:'navsp'}));
   side.append(h('button',{class:'navi',type:'button','data-route':'family',onclick:function(){go('family')}},h('span',{class:'ic'},ico('sliders')),'Family & settings'));

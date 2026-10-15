@@ -26,7 +26,7 @@ function tripForm(t){
 }
 function downloadIcs(t){
   var s=t.start.replace(/-/g,''),e=addDays(t.end||t.start,1).replace(/-/g,'');
-  var ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Nourish//EN','BEGIN:VEVENT','UID:'+t.id+'@nourish','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','DTSTART;VALUE=DATE:'+s,'DTEND;VALUE=DATE:'+e,'SUMMARY:'+t.name.replace(/[,;\n]/g,' '),t.dest?'LOCATION:'+t.dest.replace(/[,;\n]/g,' '):'','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
+  var ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gundavaram//EN','BEGIN:VEVENT','UID:'+t.id+'@nourish','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','DTSTART;VALUE=DATE:'+s,'DTEND;VALUE=DATE:'+e,'SUMMARY:'+t.name.replace(/[,;\n]/g,' '),t.dest?'LOCATION:'+t.dest.replace(/[,;\n]/g,' '):'','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
   var a=h('a',{href:URL.createObjectURL(new Blob([ics],{type:'text/calendar'})),download:t.name.replace(/\W+/g,'-')+'.ics'});document.body.append(a);a.click();a.remove();
 }
 function pageTrips(el,id){

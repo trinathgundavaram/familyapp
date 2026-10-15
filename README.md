@@ -1,4 +1,4 @@
-# Nourish – your family hub (free to run)
+# Gundavaram – your family hub (free to run)
 
 One app for the whole family: Home dashboard, Calendar, Timetable, Tasks & chores, Shopping lists, Money (income, spending, budgets, bills, savings goals), Calories, Trips (plan, packing, bookings), Meal plan, and a Family info vault.
 Works on iPhone (add it to your Home Screen) and on a laptop browser. Everything syncs live between family members.

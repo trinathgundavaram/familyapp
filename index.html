@@ -8,8 +8,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Nourish">
-<title>Nourish – Family Hub</title>
+<meta name="apple-mobile-web-app-title" content="Gundavaram">
+<title>Gundavaram – Family Hub</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -337,6 +337,27 @@ details.card>summary::-webkit-details-marker{display:none}
 @media (min-width:900px){.shoplist{display:block;columns:2;column-gap:28px}}
 .basket .shoplist{padding:0}
 
+/* nutrition targets */
+.calfrac{font-family:var(--font-d);letter-spacing:-.02em;line-height:1.1;margin-top:2px}
+.calfrac b{font-size:1.6rem;font-weight:700}
+.calfrac span{font-size:1rem;color:var(--muted);font-weight:500}
+.calfrac.sm b{font-size:1.05rem}.calfrac.sm span{font-size:.85rem}
+.mlab{display:flex;justify-content:space-between;align-items:baseline;gap:6px;color:var(--ink2)}
+.mlab .num{color:var(--muted);font-size:.74rem;white-space:nowrap}
+.mlab .num b{color:var(--ink);font-weight:600;font-size:.82rem}
+.plan{display:flex;flex-direction:column;gap:12px}
+.plangrid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:8px}
+.pcell{background:var(--soft);border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.pcell span{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.pcell b{font-family:var(--font-d);font-size:1.15rem;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.pcell small{font-size:.7rem;color:var(--muted)}
+.pcell.cal{background:var(--brand-soft)}.pcell.cal b{color:var(--brand-strong)}
+details.manual{border:1px solid var(--line);border-radius:12px;padding:0 14px}
+details.manual>summary{min-height:46px;display:flex;align-items:center;font-weight:600;cursor:pointer;list-style:none}
+details.manual>summary::-webkit-details-marker{display:none}
+details.manual[open]{padding-bottom:14px}
+@media (max-width:380px){.plangrid{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -478,7 +499,7 @@ function gate(content){var el=h('div',{class:'gate'},h('div',{class:'gatecard'},
 function gateSignIn(AU,auth){
   return new Promise(function(res){
     var msg=h('div',{class:'muted small','aria-live':'polite'});
-    var el=gate([h('div',{class:'logo','aria-hidden':'true'},ico('home')),h('h1',{text:'Welcome to Nourish'}),
+    var el=gate([h('div',{class:'logo','aria-hidden':'true'},ico('home')),h('h1',{text:'Welcome to Gundavaram'}),
       h('p',{class:'muted',text:'One home for your family: calendar, chores, shopping, budget, trips and more.'}),
       h('button',{class:'btn primary wide',type:'button',onclick:async function(){
         msg.textContent='Opening Google…';
@@ -787,7 +808,7 @@ function updCalTab(){
 function buildShell(){
   var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['timetable','Timetable','🗓️'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['house','Household','🔑'],['food','Calories','🥗'],['trips','Trips','✈️'],['meals','Meal plan','🍽️'],['notes','Family info','📒']];
   var side=$('#side');
-  side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},ico('home')),h('div',null,h('b',{text:'Nourish'}),h('small',{text:'Family hub'}))));
+  side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},ico('home')),h('div',null,h('b',{text:'Gundavaram'}),h('small',{text:'Family hub'}))));
   nav.forEach(function(n){side.append(h('button',{class:'navi',type:'button','data-route':n[0],onclick:function(){go(n[0])}},h('span',{class:'ic'},n[0]==='cal'?calIcon():ico(n[2])),n[1]))});
   side.append(h('div',{class:'navsp'}));
   side.append(h('button',{class:'navi',type:'button','data-route':'family',onclick:function(){go('family')}},h('span',{class:'ic'},ico('sliders')),'Family & settings'));
@@ -998,9 +1019,9 @@ function applySize(s){if(s==='n')document.documentElement.removeAttribute('data-
 function pageFamily(el){
   var wrap=h('div',{class:'page-inner',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   el.append(pageHead('Family & settings'),wrap);
-  function inviteText(){return 'Join our family on Nourish. Open '+location.href.split('#')[0]+' , sign in with Google, then choose “Join with a code” and enter: '+S.famId}
+  function inviteText(){return 'Join our family on Gundavaram. Open '+location.href.split('#')[0]+' , sign in with Google, then choose “Join with a code” and enter: '+S.famId}
   function share(){
-    if(navigator.share){navigator.share({title:'Join our family on Nourish',text:inviteText()}).catch(function(){})}
+    if(navigator.share){navigator.share({title:'Join our family on Gundavaram',text:inviteText()}).catch(function(){})}
     else if(navigator.clipboard){navigator.clipboard.writeText(inviteText()).then(function(){toast('Invite copied. Paste it in a message.')},function(){toast('Could not copy. Share the code by message.')})}
   }
   function allowCard(){
@@ -1793,35 +1814,82 @@ function openAddFood(date,meal,uid){
   closeFn=openSheet('Add food',h('div',{class:'form'},chips,pane));
 }
 
-function goalSheet(uid){
-  uid=uid||S.uid;var m=S.members[uid]||{},isMe=uid===S.uid,gIn=h('input',{id:'goalIn',type:'number',inputmode:'numeric',min:'800',max:'6000',value:m.goal||2000}),gmsg=h('div',{class:'small',style:{color:'var(--over)'},'aria-live':'polite'});
-  function fld(id,label,attrs){var i=h('input',Object.assign({id:id},attrs));return {i:i,w:h('div',{class:'field'},h('label',{for:id,text:label}),i)}}
-  var age=fld('cAge','Age',{type:'number',inputmode:'numeric',min:'18',max:'110'}),ft=fld('cFt','Height, feet',{type:'number',inputmode:'numeric',min:'3',max:'8'}),inch=fld('cIn','Inches',{type:'number',inputmode:'numeric',min:'0',max:'11',value:'0'}),wt=fld('cWt','Weight, pounds',{type:'number',inputmode:'decimal',min:'60',max:'700'});
-  var sex=h('select',{id:'cSex'},h('option',{value:'f',text:'Female'}),h('option',{value:'m',text:'Male'}));
-  var act=h('select',{id:'cAct'},h('option',{value:'1.2',text:'Mostly sitting'}),h('option',{value:'1.375',text:'Light activity',selected:true}),h('option',{value:'1.55',text:'Active, exercise most days'}),h('option',{value:'1.725',text:'Very active or physical job'}));
-  var aim=h('select',{id:'cAim'},h('option',{value:'0',text:'Stay at my weight'}),h('option',{value:'-250',text:'Lose about 0.5 lb a week'}),h('option',{value:'-500',text:'Lose about 1 lb a week'}),h('option',{value:'250',text:'Gain about 0.5 lb a week'}));
-  var res=h('div',{class:'form','aria-live':'polite'}),el;
-  function save(v){v=Math.round(Number(v));if(!(v>=800&&v<=6000)){gmsg.textContent='Enter a goal between 800 and 6,000 calories.';return false}savePerson(uid,{goal:v,goalSet:true});return true}
-  var calc=h('button',{class:'btn wide',type:'button',onclick:function(){
-    var a=Number(age.i.value),H=Number(ft.i.value)*12+Number(inch.i.value||0),W=Number(wt.i.value);res.replaceChildren();
-    if(!(a>=18&&H>=36&&W>=60)){res.append(h('div',{class:'muted small',text:'Fill in age, height and weight to see a suggestion.'}));return}
-    var bmr=10*W*0.45359237+6.25*H*2.54-5*a+(sex.value==='m'?5:-161),maint=bmr*Number(act.value),target=Math.max(1200,Math.round((maint+Number(aim.value))/10)*10);
-    res.append(h('div',null,h('span',{class:'label',text:'Suggested goal'}),h('div',{class:'bigcal num',text:fmt(target)+' kcal'})),h('div',{class:'muted small',text:'Staying the same weight takes about '+fmt(maint)+' a day.'}),
-      h('button',{class:'btn primary wide',type:'button',onclick:function(){if(save(target)){el.close();toast('Goal set to '+fmt(target))}}},'Use this goal'),
-      h('div',{class:'muted small',text:'This is an estimate. Please talk to a doctor or dietitian before cutting calories, especially if you are older or have a health condition.'}));
-  }},'Work out a goal for me');
-  el=openSheet(isMe?'Daily calorie goal':nameOf(uid)+'’s daily calorie goal',h('div',{class:'form'},h('div',{class:'field'},h('label',{for:'goalIn',text:isMe?'My daily goal (calories)':nameOf(uid)+'’s daily goal (calories)'}),gIn),gmsg,
-    h('button',{class:'btn primary wide',type:'button',onclick:function(){if(save(gIn.value)){el.close();toast('Goal saved')}}},'Save goal'),
-    h('details',{style:{background:'var(--soft)',borderRadius:'14px',padding:'0 14px'}},h('summary',{style:{minHeight:'48px',display:'flex',alignItems:'center',fontWeight:'700'}},'Help me choose a goal'),
-      h('div',{class:'form',style:{paddingBottom:'14px'}},h('div',{class:'f2'},age.w,h('div',{class:'field'},h('label',{for:'cSex',text:'Sex'}),sex)),h('div',{class:'f2',style:{gridTemplateColumns:'repeat(3,1fr)'}},ft.w,inch.w,wt.w),h('div',{class:'field'},h('label',{for:'cAct',text:'Activity'}),act),h('div',{class:'field'},h('label',{for:'cAim',text:'Aim'}),aim),calc,res))));
+/* ---- nutrition targets: calories (Mifflin-St Jeor) + protein / carbs / fat ---- */
+var ACTS=[['1.2','Mostly sitting'],['1.375','Light activity (1–3 days a week)'],['1.55','Active (exercise most days)'],['1.725','Very active or physical job']];
+var AIMS=[['0','Stay at my weight'],['-250','Lose about 0.5 lb a week'],['-500','Lose about 1 lb a week'],['250','Gain about 0.5 lb a week']];
+function calcPlan(b){
+  var a=Number(b.age),H=(Number(b.ft)||0)*12+(Number(b.inch)||0),W=Number(b.lb);
+  if(!(a>=13&&a<=110&&H>=48&&H<=96&&W>=60&&W<=700))return null;
+  var kg=W*0.45359237,cm=H*2.54,act=Number(b.act)||1.375,aim=a<18?0:Number(b.aim)||0;
+  var bmr=10*kg+6.25*cm-5*a+(b.sex==='m'?5:-161),maint=bmr*act;
+  var cal=Math.max(a<18?1600:1200,Math.round((maint+aim)/10)*10);
+  var pf={'1.2':1.0,'1.375':1.2,'1.55':1.4,'1.725':1.6}[String(act)]||1.2;if(aim<0)pf+=0.2;
+  var p=Math.min(kg*pf,cal*0.35/4),f=cal*0.30/9,c=Math.max(0,(cal-p*4-f*9)/4);
+  return {cal:cal,maint:Math.round(maint),p:Math.round(p),c:Math.round(c),f:Math.round(f),teen:a<18,pf:pf};
 }
-
+// Targets for a person: saved plan, else split their calorie goal 20% protein / 50% carbs / 30% fat.
+function macroTargets(uid){
+  var m=S.members[uid]||{},g=goalOf(uid),t=m.macros||{};
+  return {cal:g,p:t.p>0?t.p:Math.round(g*0.20/4),c:t.c>0?t.c:Math.round(g*0.50/4),f:t.f>0?t.f:Math.round(g*0.30/9),set:!!(t.p>0)};
+}
+function goalSheet(uid){
+  uid=uid||S.uid;var m=S.members[uid]||{},b=m.body||{},isMe=uid===S.uid,who=isMe?'your':nameOf(uid)+'’s',el;
+  function fld(id,label,attrs,val){var i=h('input',Object.assign({id:id},attrs));if(val!=null&&val!=='')i.value=val;return {i:i,w:h('div',{class:'field'},h('label',{for:id,text:label}),i)}}
+  function sel(id,label,opts,val){var s=h('select',{id:id},opts.map(function(o){return h('option',{value:o[0],text:o[1]})}));if(val!=null)s.value=String(val);return {i:s,w:h('div',{class:'field'},h('label',{for:id,text:label}),s)}}
+  var age=fld('nAge','Age',{type:'number',inputmode:'numeric',min:'13',max:'110'},b.age),
+      sex=sel('nSex','Sex',[['f','Female'],['m','Male']],b.sex||'f'),
+      ft=fld('nFt','Height, feet',{type:'number',inputmode:'numeric',min:'4',max:'8'},b.ft),
+      inch=fld('nIn','Inches',{type:'number',inputmode:'numeric',min:'0',max:'11'},b.inch==null?'0':b.inch),
+      wt=fld('nWt','Weight, pounds',{type:'number',inputmode:'decimal',min:'60',max:'700'},b.lb),
+      act=sel('nAct','Activity',ACTS,b.act||'1.375'),
+      aim=sel('nAim','Aim',AIMS,b.aim||'0');
+  var res=h('div',{class:'plan','aria-live':'polite'});
+  function stats(){return {age:age.i.value,sex:sex.i.value,ft:ft.i.value,inch:inch.i.value,lb:wt.i.value,act:act.i.value,aim:aim.i.value}}
+  function draw(){
+    var bb=stats(),pl=calcPlan(bb);res.replaceChildren();
+    if(Number(bb.age)>0&&Number(bb.age)<13){res.append(h('div',{class:'muted small',text:'For children under 13, please ask your pediatrician for targets and enter them under “Set my own numbers”.'}));return}
+    if(!pl){res.append(h('div',{class:'muted small',text:'Fill in age, height and weight to see '+who+' daily targets.'}));return}
+    res.append(
+      h('div',{class:'plangrid'},
+        h('div',{class:'pcell cal'},h('span',{text:'Calories'}),h('b',{class:'num',text:fmt(pl.cal)}),h('small',{text:'kcal a day'})),
+        h('div',{class:'pcell'},h('span',{text:'Protein'}),h('b',{class:'num',text:pl.p+' g'}),h('small',{text:Math.round(pl.p*4/pl.cal*100)+'%'})),
+        h('div',{class:'pcell'},h('span',{text:'Carbs'}),h('b',{class:'num',text:pl.c+' g'}),h('small',{text:Math.round(pl.c*4/pl.cal*100)+'%'})),
+        h('div',{class:'pcell'},h('span',{text:'Fat'}),h('b',{class:'num',text:pl.f+' g'}),h('small',{text:Math.round(pl.f*9/pl.cal*100)+'%'}))),
+      h('div',{class:'muted small',text:'Staying the same weight takes about '+fmt(pl.maint)+' kcal a day. Protein is '+pl.pf.toFixed(1)+' g per kg of body weight, fat is 30% of calories and carbs make up the rest.'+(pl.teen?' Teen targets keep weight steady; ask a doctor before any diet.':'')}),
+      h('button',{class:'btn primary wide',type:'button',onclick:function(){
+        savePerson(uid,{body:bb,goal:pl.cal,goalSet:true,macros:{p:pl.p,c:pl.c,f:pl.f},plan:'auto'});el.close();toast('Saved '+(isMe?'your':nameOf(uid)+'’s')+' daily targets')}},'Save these targets'));
+  }
+  [age,ft,inch,wt].forEach(function(x){x.i.addEventListener('input',draw)});[sex,act,aim].forEach(function(x){x.i.addEventListener('change',draw)});
+  var cur=macroTargets(uid);
+  var mc=fld('mCal','Calories',{type:'number',inputmode:'numeric',min:'800',max:'6000'},m.goal||2000),
+      mp=fld('mP','Protein (g)',{type:'number',inputmode:'numeric',min:'0',max:'400'},cur.p),
+      mcb=fld('mC','Carbs (g)',{type:'number',inputmode:'numeric',min:'0',max:'800'},cur.c),
+      mf=fld('mF','Fat (g)',{type:'number',inputmode:'numeric',min:'0',max:'300'},cur.f),
+      mmsg=h('div',{class:'small',style:{color:'var(--over)'},'aria-live':'polite'});
+  el=openSheet((isMe?'My':nameOf(uid)+'’s')+' daily targets',h('div',{class:'form'},
+    h('div',{class:'f2'},age.w,sex.w),h('div',{class:'f2',style:{gridTemplateColumns:'1fr 1fr 1.3fr'}},ft.w,inch.w,wt.w),act.w,aim.w,res,
+    h('details',{class:'manual'},h('summary',null,'Set my own numbers'),
+      h('div',{class:'form',style:{paddingTop:'12px'}},h('div',{class:'muted small',text:'Use this if a doctor or dietitian gave you targets.'}),mc.w,h('div',{class:'f2',style:{gridTemplateColumns:'1fr 1fr 1fr'}},mp.w,mcb.w,mf.w),mmsg,
+        h('button',{class:'btn wide',type:'button',onclick:function(){
+          var v=Math.round(Number(mc.i.value));if(!(v>=800&&v<=6000)){mmsg.textContent='Enter calories between 800 and 6,000.';return}
+          savePerson(uid,{goal:v,goalSet:true,macros:{p:Math.round(Number(mp.i.value))||0,c:Math.round(Number(mcb.i.value))||0,f:Math.round(Number(mf.i.value))||0},plan:'manual'});el.close();toast('Targets saved')}},'Save my numbers'))),
+    h('div',{class:'muted small',text:'These are estimates for healthy adults. Please talk to a doctor or dietitian before cutting calories, especially if pregnant, older, or managing a health condition.'})));
+  draw();
+}
+function macroBars(t,tg){
+  var mac=h('div',{class:'macrow'});
+  [['p','Protein','var(--c-tasks)'],['c','Carbs','var(--c-shop)'],['f','Fat','var(--c-notes)']].forEach(function(x){
+    var v=t[x[0]]||0,g=tg[x[0]]||1,b=h('i');b.style.width=Math.min(100,v/g*100)+'%';b.style.background=v>g*1.1?'var(--over)':x[2];
+    mac.append(h('div',null,h('div',{class:'mlab'},h('span',{text:x[1]}),h('span',{class:'num'},h('b',{text:fmt(v)}),' / '+fmt(g)+' g')),h('div',{class:'bar'},b)));
+  });
+  return mac;
+}
 function pageFood(el,param){
   var date=today(),view=param&&param!=='me'&&S.members[param]?param:S.uid,tab='day';
   var seg=segControl([['day','Day'],['week','Week'],['fam','Family']],tab,function(v){tab=v;upd()});
   var body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var banner=h('div',{class:'card',style:{background:'var(--ink)',color:'var(--bg)'},hidden:true});
-  el.append(pageHead('Calories',null,[h('button',{class:'btn sm',type:'button',onclick:function(){goalSheet(view)}},ico('target'),'Goal')]),seg,banner,body,fab('Add food',function(){openAddFood(date,null,view)}));
+  el.append(pageHead('Calories',null,[h('button',{class:'btn sm',type:'button',onclick:function(){goalSheet(view)}},ico('target'),'Targets')]),seg,banner,body,fab('Add food',function(){openAddFood(date,null,view)}));
   function ro(){return false} // everyone in the family can edit any log
   function dateBar(){
     return h('div',{class:'card',style:{padding:'8px',flexDirection:'row',alignItems:'center'}},
@@ -1832,11 +1900,11 @@ function pageFood(el,param){
   function dayView(){
     var entries=dayEntries(view,date),t=sumEntries(entries),goal=goalOf(view),left=goal-t.cal,over=left<0;
     body.append(dateBar());
-    if(view===S.uid&&!me().goalSet)body.append(h('div',{class:'card',style:{flexDirection:'row',alignItems:'center'}},h('span',{class:'grow',text:'Set your daily calorie goal for better numbers.'}),h('button',{class:'btn primary sm',type:'button',onclick:function(){goalSheet()}},'Set goal')));
-    var tgt={p:goal*0.25/4,c:goal*0.5/4,f:goal*0.25/9},mac=h('div',{class:'macrow'});
-    [['p','Protein',t.p,'var(--c-tasks)'],['c','Carbs',t.c,'var(--c-shop)'],['f','Fat',t.f,'var(--c-notes)']].forEach(function(x){var b=h('i');b.style.width=Math.min(100,x[2]/tgt[x[0]]*100)+'%';b.style.background=x[3];mac.append(h('div',null,h('div',{class:'row'},h('span',{text:x[1]}),h('b',{class:'right num',text:fmt(x[2])+' g'})),h('div',{class:'bar'},b)))});
+    var vm=S.members[view]||{},tg=macroTargets(view);
+    if(!(vm.macros&&vm.macros.p>0))body.append(h('div',{class:'card',style:{flexDirection:'row',alignItems:'center'}},h('span',{class:'grow',text:'Work out '+(view===S.uid?'your':nameOf(view)+'’s')+' calories, protein, carbs and fat from age, height and weight.'}),h('button',{class:'btn primary sm nowrap',type:'button',onclick:function(){goalSheet(view)}},'Set targets')));
     body.append(h('section',{class:'card'},h('div',{class:'row'},donut([{v:Math.min(t.cal,goal),color:over?'var(--over)':'var(--c-food)'}],goal,fmt(Math.abs(left)),over?'over':'left'),
-      h('div',{class:'grow'},h('div',{class:'num',style:{fontSize:'1.5rem',fontWeight:'800'},text:fmt(t.cal)}),h('div',{class:'muted small',text:'eaten of '+fmt(goal)}))),mac));
+      h('div',{class:'grow'},h('div',{class:'label',text:'Calories'}),h('div',{class:'num calfrac'},h('b',{text:fmt(t.cal)}),h('span',{text:' / '+fmt(goal)})),h('div',{class:'muted small',text:'consumed / required'}),
+        h('button',{class:'btn sm',type:'button',style:{marginTop:'8px'},onclick:function(){goalSheet(view)}},ico('target'),'Targets'))),macroBars(t,tg)));
     var yest=ucol(view,'days').get(addDays(date,-1));
     FMEALS.forEach(function(m){
       var list=entries.filter(function(e){return e.meal===m[0]}),sub=sum(list,function(e){return e.cal||0});
@@ -1870,12 +1938,13 @@ function pageFood(el,param){
     var ids=memberList().map(function(m){return m.id});
     if(!ids.length)ids=[S.uid];
     ids.forEach(function(id){
-      var s=foodSummary(id,today()),left=s.goal-s.cal,pb=h('i');pb.style.width=Math.min(100,s.cal/s.goal*100)+'%';if(left<0)pb.className='over';
-      body.append(h('section',{class:'card'},h('div',{class:'row'},avatar(id,'lg'),h('div',{class:'grow'},h('b',{text:nameOf(id)+(id===S.uid?' (you)':'')}),h('div',{class:'muted small',text:'Goal '+fmt(s.goal)+' a day'}))),h('div',{class:'bar'},pb),
-        h('div',{class:'row'},h('span',null,h('b',{class:'num',text:fmt(s.cal)}),' eaten · ',h('span',{class:'num',style:left<0?{color:'var(--over)'}:{},text:left<0?fmt(-left)+' over':fmt(left)+' left'})),
+      var s=foodSummary(id,today()),left=s.goal-s.cal,pb=h('i'),tg=macroTargets(id);pb.style.width=Math.min(100,s.cal/s.goal*100)+'%';if(left<0)pb.className='over';
+      body.append(h('section',{class:'card'},h('div',{class:'row'},avatar(id,'lg'),h('div',{class:'grow'},h('b',{text:nameOf(id)+(id===S.uid?' (you)':'')}),h('div',{class:'num calfrac sm'},h('b',{text:fmt(s.cal)}),h('span',{text:' / '+fmt(s.goal)+' kcal'}))),
+          h('button',{class:'btn sm',type:'button',onclick:function(){goalSheet(id)}},'Targets')),h('div',{class:'bar'},pb),macroBars(s,tg),
+        h('div',{class:'row'},h('span',{class:'num small',style:left<0?{color:'var(--over)'}:{},text:left<0?fmt(-left)+' kcal over':fmt(left)+' kcal left'}),
           h('button',{class:'btn sm right',type:'button',onclick:function(){view=id;tab='day';date=today();seg.replaceWith(seg=segControl([['day','Day'],['week','Week'],['fam','Family']],'day',function(v){tab=v;upd()}));upd()}},id===S.uid?'My log':'View log'))));
     });
-    body.append(h('div',{class:'muted small',text:'Everyone in the family can see each other’s food logs. Each person can only change their own.'}));
+    body.append(h('div',{class:'muted small',text:'Everyone in the family can see and update each other’s food logs and targets.'}));
   }
   function upd(){
     var active=document.activeElement;if(active&&active.tagName==='INPUT'&&body.contains(active))return;
@@ -1916,7 +1985,7 @@ function tripForm(t){
 }
 function downloadIcs(t){
   var s=t.start.replace(/-/g,''),e=addDays(t.end||t.start,1).replace(/-/g,'');
-  var ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Nourish//EN','BEGIN:VEVENT','UID:'+t.id+'@nourish','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','DTSTART;VALUE=DATE:'+s,'DTEND;VALUE=DATE:'+e,'SUMMARY:'+t.name.replace(/[,;\n]/g,' '),t.dest?'LOCATION:'+t.dest.replace(/[,;\n]/g,' '):'','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
+  var ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gundavaram//EN','BEGIN:VEVENT','UID:'+t.id+'@nourish','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','DTSTART;VALUE=DATE:'+s,'DTEND;VALUE=DATE:'+e,'SUMMARY:'+t.name.replace(/[,;\n]/g,' '),t.dest?'LOCATION:'+t.dest.replace(/[,;\n]/g,' '):'','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
   var a=h('a',{href:URL.createObjectURL(new Blob([ics],{type:'text/calendar'})),download:t.name.replace(/\W+/g,'-')+'.ics'});document.body.append(a);a.click();a.remove();
 }
 function pageTrips(el,id){
@@ -2230,7 +2299,7 @@ function icsAlarm(days,desc){
   return ['BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(desc),'TRIGGER:'+trig,'END:VALARM'];
 }
 function houseIcs(){
-  var stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z',L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Nourish//Household//EN','CALSCALE:GREGORIAN','X-WR-CALNAME:Nourish household'];
+  var stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z',L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gundavaram//Household//EN','CALSCALE:GREGORIAN','X-WR-CALNAME:Gundavaram household'];
   houseItems().forEach(function(it){
     var ty=htype(it.type),link=safeUrl(it.link);
     var desc=[ty[1]+(it.provider?' · '+it.provider:''),Number(it.amount)>0?'Amount: '+money(it.amount):'',it.autopay?'Autopay is on':'',it.phone?'Phone: '+it.phone:'',link?'Website: '+link:'',it.docs?'Papers: '+it.docs:''].filter(Boolean).join('\n');
@@ -2268,7 +2337,7 @@ function calHelp(){
     h('ol',{style:{margin:'0',paddingLeft:'20px',display:'flex',flexDirection:'column',gap:'6px'}},
       h('li',{text:'Best on iPhone: open the app in Safari (not from the Home Screen icon).'}),
       h('li',{text:'Tap “Add to my calendar” below, then “Add All”.'}),
-      h('li',{text:'If you change dates later, delete the old “Nourish household” events and add again.'})),
+      h('li',{text:'If you change dates later, delete the old “Gundavaram household” events and add again.'})),
     h('button',{class:'btn primary wide',type:'button',onclick:exportHouseCal},ico('calendar'),'Add to my calendar')));
 }
 

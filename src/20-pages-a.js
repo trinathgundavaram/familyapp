@@ -199,9 +199,9 @@ function applySize(s){if(s==='n')document.documentElement.removeAttribute('data-
 function pageFamily(el){
   var wrap=h('div',{class:'page-inner',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   el.append(pageHead('Family & settings'),wrap);
-  function inviteText(){return 'Join our family on Nourish. Open '+location.href.split('#')[0]+' , sign in with Google, then choose “Join with a code” and enter: '+S.famId}
+  function inviteText(){return 'Join our family on Gundavaram. Open '+location.href.split('#')[0]+' , sign in with Google, then choose “Join with a code” and enter: '+S.famId}
   function share(){
-    if(navigator.share){navigator.share({title:'Join our family on Nourish',text:inviteText()}).catch(function(){})}
+    if(navigator.share){navigator.share({title:'Join our family on Gundavaram',text:inviteText()}).catch(function(){})}
     else if(navigator.clipboard){navigator.clipboard.writeText(inviteText()).then(function(){toast('Invite copied. Paste it in a message.')},function(){toast('Could not copy. Share the code by message.')})}
   }
   function allowCard(){

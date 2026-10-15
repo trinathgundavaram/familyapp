@@ -147,7 +147,7 @@ function icsAlarm(days,desc){
   return ['BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(desc),'TRIGGER:'+trig,'END:VALARM'];
 }
 function houseIcs(){
-  var stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z',L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Nourish//Household//EN','CALSCALE:GREGORIAN','X-WR-CALNAME:Nourish household'];
+  var stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z',L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gundavaram//Household//EN','CALSCALE:GREGORIAN','X-WR-CALNAME:Gundavaram household'];
   houseItems().forEach(function(it){
     var ty=htype(it.type),link=safeUrl(it.link);
     var desc=[ty[1]+(it.provider?' · '+it.provider:''),Number(it.amount)>0?'Amount: '+money(it.amount):'',it.autopay?'Autopay is on':'',it.phone?'Phone: '+it.phone:'',link?'Website: '+link:'',it.docs?'Papers: '+it.docs:''].filter(Boolean).join('\n');
@@ -185,7 +185,7 @@ function calHelp(){
     h('ol',{style:{margin:'0',paddingLeft:'20px',display:'flex',flexDirection:'column',gap:'6px'}},
       h('li',{text:'Best on iPhone: open the app in Safari (not from the Home Screen icon).'}),
       h('li',{text:'Tap “Add to my calendar” below, then “Add All”.'}),
-      h('li',{text:'If you change dates later, delete the old “Nourish household” events and add again.'})),
+      h('li',{text:'If you change dates later, delete the old “Gundavaram household” events and add again.'})),
     h('button',{class:'btn primary wide',type:'button',onclick:exportHouseCal},ico('calendar'),'Add to my calendar')));
 }
 
