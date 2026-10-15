@@ -21,7 +21,8 @@ function eventsOn(date,who){
   }).sort(function(a,b){return (a.time||'')<(b.time||'')?-1:1});
 }
 function tripsOn(date){return col('trips').items.filter(function(t){return t.start&&t.end&&date>=t.start&&date<=t.end})}
-function tasksDueOn(date){return col('tasks').items.filter(function(t){return !t.done&&t.due===date})}
+// done tasks stay listed (crossed out) on the day they were due
+function tasksDueOn(date){return col('tasks').items.filter(function(t){return t.due===date&&(!t.done||date>=today())})}
 function eventForm(ev,defaults){
   var isNew=!ev;ev=ev||Object.assign({date:today(),repeat:'none',kind:'event',who:[]},defaults||{});
   openForm({title:isNew?'New event':'Edit event',values:ev,saveLabel:isNew?'Add event':'Save',
@@ -71,7 +72,7 @@ function pageHome(el){
 
     var hc=houseDueCard();if(hc)grid.append(hc);
     // today
-    var c=card(),evs=eventsOn(t),tsk=col('tasks').items.filter(function(x){return !x.done&&x.due&&x.due<=t}).sort(function(a,b){return a.due<b.due?-1:1});
+    var c=card(),evs=eventsOn(t),tsk=col('tasks').items.filter(function(x){return x.due&&x.due<=t&&(!x.done||(x.doneAt&&x.doneAt>=new Date(t+'T00:00').getTime()))}).sort(function(a,b){return a.due<b.due?-1:1});
     c.append(cardHead('📅','var(--c-cal)','Today','Calendar',function(){go('cal')}));
     var l=h('div',{class:'list'});
     tripsOn(t).forEach(function(tr){l.append(h('button',{class:'item',type:'button',onclick:function(){go('trips',tr.id)}},h('span',{class:'evbar',style:{background:'var(--c-trips)'}}),h('div',{class:'t'},h('b',{text:'✈️ '+tr.name}),h('small',{text:'Trip in progress'}))))});
@@ -81,10 +82,11 @@ function pageHome(el){
     c.append(l);
 
     // shopping
-    c=card();var open=col('shop').items.filter(function(x){return !x.done});
+    c=card();var open=col('shop').items.filter(function(x){return !x.done}),t0=new Date(t+'T00:00').getTime();
+    var shown=col('shop').items.filter(function(x){return !x.done||(x.doneAt&&x.doneAt>=t0)}).sort(function(a,b){return (a.at||0)-(b.at||0)});
     c.append(cardHead('🛒','var(--c-shop)','Shopping',open.length+' to buy',function(){go('shop')}));
-    l=h('div',{class:'list'});
-    open.slice(0,5).forEach(function(x){l.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:x.name}),x.qty?h('small',{text:x.qty}):null)))});
+    l=h('div',{class:'shoplist home'});
+    shown.slice(0,6).forEach(function(x){l.append(shopRow(x))});
     if(!open.length)l.append(emptyState('🧺','Your shopping list is empty.',h('button',{class:'btn sm',type:'button',onclick:shopQuick},'Add an item')));
     c.append(l);
 

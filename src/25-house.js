@@ -17,7 +17,6 @@ function addMonthsKeep(s,n,day){
   var a=s.split('-').map(Number),y=a[0],m=a[1]-1+n;y+=Math.floor(m/12);m=((m%12)+12)%12;
   var last=new Date(y,m+1,0).getDate();return y+'-'+pad(m+1)+'-'+pad(Math.min(day||a[2],last));
 }
-function nextDue(it){var n=HREPEAT_MONTHS[it.repeat];return n?addMonthsKeep(it.due,n,it.day):null}
 // Autopay items roll forward on their own once the date has passed.
 function effDue(it){
   var d=it.due,t=today(),n=HREPEAT_MONTHS[it.repeat],guard=0;

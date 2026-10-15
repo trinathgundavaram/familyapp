@@ -560,3 +560,53 @@ details.manual{border:0;background:var(--soft)}
 }
 @media (min-width:1500px){.cols{grid-template-columns:repeat(3,minmax(0,1fr))}.cols>.card:nth-child(-n+3){border-top:0}}
 @media (min-width:1100px){.cols>.span~.card:nth-child(-n+3){border-top:0}}
+
+/* =====================================================================
+   v5: each section is a soft rounded panel with space between;
+   no divider lines between rows
+   ===================================================================== */
+:root{--panel:#F3F9FB;--panel-2:#FFFFFF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--panel:#0F232E;--panel-2:#142E3B}}
+:root[data-theme="dark"]{--panel:#0F232E;--panel-2:#142E3B}
+
+.page{gap:14px}
+.card,.grid>.card,.cols>.card{background:var(--panel);border:0!important;border-radius:20px;padding:16px 18px;gap:10px}
+.card.tap{padding:16px 18px;border-radius:20px}
+.card.tap:hover{background:color-mix(in srgb,var(--panel) 70%,var(--brand-soft))}
+.grid{gap:14px!important}
+@media (min-width:1100px){.cols{gap:16px!important}}
+.panel .card{background:none;padding:0}
+.card.datebar{background:none;padding:4px 0}
+
+/* section header: clear title, then content */
+.chead{gap:12px;padding-bottom:2px}
+.card h2,.chead h2{font-size:1.05rem;font-weight:700}
+.chead .ico{width:34px;height:34px;background:var(--panel-2)}
+.chead .more{background:var(--panel-2)}
+
+/* rows: no lines, light spacing, soft hover */
+.list{gap:2px}
+.item{border-top:0!important;padding:9px 10px;margin:0 -10px;border-radius:12px;min-height:48px}
+button.item:hover,.item:hover{background:var(--panel-2)}
+.list>.item+.item{border-top:0}
+
+/* shopping */
+.shoplist{padding:12px 18px 14px}
+.aisle{padding-bottom:6px}
+.aisle+.aisle{margin-top:6px}
+.aislehead{border-bottom:0!important;padding:6px 0 2px;color:var(--brand-strong)}
+.srow{border-bottom:0!important;min-height:40px;border-radius:10px;padding:0 8px;margin:0 -8px}
+.srow:hover{background:var(--panel-2)}
+.srow.done .sname{color:var(--muted)}
+.srow.done .qty{opacity:.5}
+.shoplist.home{padding:0}
+
+/* inner tiles sit on white so they read inside a panel */
+.card .ttcell,.card .kpi,.card .pcell,.card .qty{background:var(--panel-2)}
+.card input,.card select,.card textarea{background:var(--panel-2)}
+.kpi{border-left:0!important;padding:10px 12px!important;border-radius:14px!important;background:var(--panel-2)}
+.kpis{gap:8px!important}
+.empty .big{background:var(--panel-2)}
+.calbody.month>.card{padding:16px 18px}
+details.card>summary{min-height:32px}
+.shoplist.home{columns:1!important}

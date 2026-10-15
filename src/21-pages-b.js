@@ -50,7 +50,7 @@ function taskForm(x,defaults){
     del:isNew?null:function(){col('tasks').del(x.id);toast('Task deleted')}});
 }
 function pageTasks(el){
-  var curList='All',mine=false,showDone=false;
+  var curList='All',mine=false,showDone=false,keep={},lastOpen={};
   var tabs=h('div'),lists=h('div'),body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var input=h('input',{type:'text',placeholder:'Add a task…','aria-label':'Add a task',enterkeyhint:'done',maxlength:'120'});
   function quick(){var v=input.value.trim();if(!v)return;
@@ -66,7 +66,10 @@ function pageTasks(el){
     g.classList.add('scroll');lists.append(g);
     lists.append(h('div',{class:'row',style:{marginTop:'10px'}},chipGroup([['all','Everyone'],['mine','Mine']],mine?'mine':'all',false,function(v){mine=v==='mine';upd()})));
     var items=all.filter(function(t){return (curList==='All'||t.list===curList)&&(!mine||t.assignee===S.uid)});
-    var open=items.filter(function(t){return !t.done}),done=items.filter(function(t){return t.done});
+    // a task ticked while you are on this page stays where it was (crossed out) until you leave
+    items.forEach(function(t){if(t.done&&lastOpen[t.id])keep[t.id]=1});
+    var open=items.filter(function(t){return !t.done||keep[t.id]}),done=items.filter(function(t){return t.done&&!keep[t.id]});
+    lastOpen={};items.forEach(function(t){if(!t.done)lastOpen[t.id]=1});
     body.replaceChildren();
     var t=today(),groups=[['Overdue',open.filter(function(x){return x.due&&x.due<t})],['Today',open.filter(function(x){return x.due===t})],['Upcoming',open.filter(function(x){return x.due&&x.due>t}).sort(function(a,b){return a.due<b.due?-1:1})],['No date',open.filter(function(x){return !x.due})]];
     groups.forEach(function(g){
@@ -176,29 +179,26 @@ function pageShop(el){
     var items=col('shop').items.filter(function(i){return i.list===curList});
     var open=items.filter(function(i){return !i.done}),done=items.filter(function(i){return i.done});
     body.replaceChildren();
-    head.replaceChildren(pageHead('Shopping',open.length?open.length+' to buy'+(done.length?' · '+done.length+' in the basket':''):'All done',
-      open.length?[h('button',{class:'btn sm',type:'button',onclick:function(){shareList(open)}},'Share')]:null));
-    if(!open.length)body.append(h('div',{class:'card'},emptyState('🛒','Nothing to buy. Type an item above.')));
+    head.replaceChildren(pageHead('Shopping',open.length?open.length+' to buy'+(done.length?' · '+done.length+' bought':''):(done.length?'All bought':'Nothing to buy'),
+      [open.length?h('button',{class:'btn sm',type:'button',onclick:function(){shareList(open)}},'Share'):null,
+       done.length?h('button',{class:'btn sm',type:'button',onclick:function(){done.forEach(function(x){col('shop').del(x.id)});toast('Cleared '+done.length+' bought')}},'Clear bought ('+done.length+')'):null].filter(Boolean)));
+    if(!items.length)body.append(h('div',{class:'card'},emptyState('🛒','Nothing to buy. Type an item above.')));
     else{
-      // one compact card, grouped by aisle
+      // one card grouped by aisle; bought items stay in place (crossed out) until cleared
       var card=h('section',{class:'card shoplist'});
       SHOP_CATS.forEach(function(c){
-        var rows=open.filter(function(i){return (i.cat||'other')===c[0]});if(!rows.length)return;
-        var g=h('div',{class:'aisle'},h('div',{class:'aislehead'},h('span',{text:String(c[1]).replace(/^[^A-Za-z0-9]+/,'')}),h('span',{class:'cnt',text:rows.length})));
+        var rows=items.filter(function(i){return (i.cat||'other')===c[0]});if(!rows.length)return;
+        var left=rows.filter(function(i){return !i.done}).length;
+        var g=h('div',{class:'aisle'},h('div',{class:'aislehead'},h('span',{text:String(c[1]).replace(/^[^A-Za-z0-9]+/,'')}),h('span',{class:'cnt',text:left?String(left):'✓'})));
         rows.sort(function(a,b){return a.name<b.name?-1:1}).forEach(function(x){g.append(shopRow(x))});card.append(g);
       });
       body.append(card);
-    }
-    if(done.length){
-      var l2=h('div',{class:'shoplist'});done.forEach(function(x){l2.append(shopRow(x))});
-      body.append(h('details',{class:'card basket'},h('summary',null,h('span',{class:'grow',text:'In the basket · '+done.length}),
-        h('button',{class:'btn sm danger',type:'button',onclick:function(e){e.preventDefault();done.forEach(function(x){col('shop').del(x.id)});toast('Cleared')}},'Clear')),l2));
     }
   }
   return upd;
 }
 function shopRow(x){
   return h('div',{class:'srow'+(x.done?' done':'')},
-    h('button',{class:'check',type:'button',role:'checkbox','aria-checked':x.done?'true':'false','aria-label':'Mark '+x.name+(x.done?' not bought':' bought'),onclick:function(){col('shop').patch(x.id,{done:!x.done})}},'✓'),
+    h('button',{class:'check',type:'button',role:'checkbox','aria-checked':x.done?'true':'false','aria-label':'Mark '+x.name+(x.done?' not bought':' bought'),onclick:function(){col('shop').patch(x.id,{done:!x.done,doneAt:!x.done?Date.now():null})}},'✓'),
     h('button',{class:'sname',type:'button',onclick:function(){shopForm(x)}},h('span',{class:'ellip',text:x.name}),x.qty?h('span',{class:'qty',text:x.qty}):null));
 }

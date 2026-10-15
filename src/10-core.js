@@ -64,7 +64,9 @@ var FAMCOLS=['events','tasks','shop','txns','bills','house','budgets','goals','t
 var refreshQueued=false;
 function refresh(){
   if(refreshQueued)return;refreshQueued=true;
-  requestAnimationFrame(function(){refreshQueued=false;if(App.upd){try{App.upd()}catch(e){console.error(e)}}try{updBadge()}catch(e){}});
+  var run=function(){if(!refreshQueued)return;refreshQueued=false;if(App.upd){try{App.upd()}catch(e){console.error(e)}}try{updBadge()}catch(e){}};
+  // paint-synced redraw, with a timer backup in case the browser pauses animation frames
+  requestAnimationFrame(run);setTimeout(run,60);
 }
 function LSget(k,d){try{var j=JSON.parse(localStorage.getItem(k));return j==null?d:j}catch(e){return d}}
 function LSset(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}

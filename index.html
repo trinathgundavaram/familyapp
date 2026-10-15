@@ -580,6 +580,56 @@ details.manual{border:0;background:var(--soft)}
 @media (min-width:1500px){.cols{grid-template-columns:repeat(3,minmax(0,1fr))}.cols>.card:nth-child(-n+3){border-top:0}}
 @media (min-width:1100px){.cols>.span~.card:nth-child(-n+3){border-top:0}}
 
+/* =====================================================================
+   v5: each section is a soft rounded panel with space between;
+   no divider lines between rows
+   ===================================================================== */
+:root{--panel:#F3F9FB;--panel-2:#FFFFFF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--panel:#0F232E;--panel-2:#142E3B}}
+:root[data-theme="dark"]{--panel:#0F232E;--panel-2:#142E3B}
+
+.page{gap:14px}
+.card,.grid>.card,.cols>.card{background:var(--panel);border:0!important;border-radius:20px;padding:16px 18px;gap:10px}
+.card.tap{padding:16px 18px;border-radius:20px}
+.card.tap:hover{background:color-mix(in srgb,var(--panel) 70%,var(--brand-soft))}
+.grid{gap:14px!important}
+@media (min-width:1100px){.cols{gap:16px!important}}
+.panel .card{background:none;padding:0}
+.card.datebar{background:none;padding:4px 0}
+
+/* section header: clear title, then content */
+.chead{gap:12px;padding-bottom:2px}
+.card h2,.chead h2{font-size:1.05rem;font-weight:700}
+.chead .ico{width:34px;height:34px;background:var(--panel-2)}
+.chead .more{background:var(--panel-2)}
+
+/* rows: no lines, light spacing, soft hover */
+.list{gap:2px}
+.item{border-top:0!important;padding:9px 10px;margin:0 -10px;border-radius:12px;min-height:48px}
+button.item:hover,.item:hover{background:var(--panel-2)}
+.list>.item+.item{border-top:0}
+
+/* shopping */
+.shoplist{padding:12px 18px 14px}
+.aisle{padding-bottom:6px}
+.aisle+.aisle{margin-top:6px}
+.aislehead{border-bottom:0!important;padding:6px 0 2px;color:var(--brand-strong)}
+.srow{border-bottom:0!important;min-height:40px;border-radius:10px;padding:0 8px;margin:0 -8px}
+.srow:hover{background:var(--panel-2)}
+.srow.done .sname{color:var(--muted)}
+.srow.done .qty{opacity:.5}
+.shoplist.home{padding:0}
+
+/* inner tiles sit on white so they read inside a panel */
+.card .ttcell,.card .kpi,.card .pcell,.card .qty{background:var(--panel-2)}
+.card input,.card select,.card textarea{background:var(--panel-2)}
+.kpi{border-left:0!important;padding:10px 12px!important;border-radius:14px!important;background:var(--panel-2)}
+.kpis{gap:8px!important}
+.empty .big{background:var(--panel-2)}
+.calbody.month>.card{padding:16px 18px}
+details.card>summary{min-height:32px}
+.shoplist.home{columns:1!important}
+
 </style>
 </head>
 <body>
@@ -658,7 +708,9 @@ var FAMCOLS=['events','tasks','shop','txns','bills','house','budgets','goals','t
 var refreshQueued=false;
 function refresh(){
   if(refreshQueued)return;refreshQueued=true;
-  requestAnimationFrame(function(){refreshQueued=false;if(App.upd){try{App.upd()}catch(e){console.error(e)}}try{updBadge()}catch(e){}});
+  var run=function(){if(!refreshQueued)return;refreshQueued=false;if(App.upd){try{App.upd()}catch(e){console.error(e)}}try{updBadge()}catch(e){}};
+  // paint-synced redraw, with a timer backup in case the browser pauses animation frames
+  requestAnimationFrame(run);setTimeout(run,60);
 }
 function LSget(k,d){try{var j=JSON.parse(localStorage.getItem(k));return j==null?d:j}catch(e){return d}}
 function LSset(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
@@ -1063,7 +1115,8 @@ function eventsOn(date,who){
   }).sort(function(a,b){return (a.time||'')<(b.time||'')?-1:1});
 }
 function tripsOn(date){return col('trips').items.filter(function(t){return t.start&&t.end&&date>=t.start&&date<=t.end})}
-function tasksDueOn(date){return col('tasks').items.filter(function(t){return !t.done&&t.due===date})}
+// done tasks stay listed (crossed out) on the day they were due
+function tasksDueOn(date){return col('tasks').items.filter(function(t){return t.due===date&&(!t.done||date>=today())})}
 function eventForm(ev,defaults){
   var isNew=!ev;ev=ev||Object.assign({date:today(),repeat:'none',kind:'event',who:[]},defaults||{});
   openForm({title:isNew?'New event':'Edit event',values:ev,saveLabel:isNew?'Add event':'Save',
@@ -1113,7 +1166,7 @@ function pageHome(el){
 
     var hc=houseDueCard();if(hc)grid.append(hc);
     // today
-    var c=card(),evs=eventsOn(t),tsk=col('tasks').items.filter(function(x){return !x.done&&x.due&&x.due<=t}).sort(function(a,b){return a.due<b.due?-1:1});
+    var c=card(),evs=eventsOn(t),tsk=col('tasks').items.filter(function(x){return x.due&&x.due<=t&&(!x.done||(x.doneAt&&x.doneAt>=new Date(t+'T00:00').getTime()))}).sort(function(a,b){return a.due<b.due?-1:1});
     c.append(cardHead('📅','var(--c-cal)','Today','Calendar',function(){go('cal')}));
     var l=h('div',{class:'list'});
     tripsOn(t).forEach(function(tr){l.append(h('button',{class:'item',type:'button',onclick:function(){go('trips',tr.id)}},h('span',{class:'evbar',style:{background:'var(--c-trips)'}}),h('div',{class:'t'},h('b',{text:'✈️ '+tr.name}),h('small',{text:'Trip in progress'}))))});
@@ -1123,10 +1176,11 @@ function pageHome(el){
     c.append(l);
 
     // shopping
-    c=card();var open=col('shop').items.filter(function(x){return !x.done});
+    c=card();var open=col('shop').items.filter(function(x){return !x.done}),t0=new Date(t+'T00:00').getTime();
+    var shown=col('shop').items.filter(function(x){return !x.done||(x.doneAt&&x.doneAt>=t0)}).sort(function(a,b){return (a.at||0)-(b.at||0)});
     c.append(cardHead('🛒','var(--c-shop)','Shopping',open.length+' to buy',function(){go('shop')}));
-    l=h('div',{class:'list'});
-    open.slice(0,5).forEach(function(x){l.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:x.name}),x.qty?h('small',{text:x.qty}):null)))});
+    l=h('div',{class:'shoplist home'});
+    shown.slice(0,6).forEach(function(x){l.append(shopRow(x))});
     if(!open.length)l.append(emptyState('🧺','Your shopping list is empty.',h('button',{class:'btn sm',type:'button',onclick:shopQuick},'Add an item')));
     c.append(l);
 
@@ -1468,7 +1522,7 @@ function taskForm(x,defaults){
     del:isNew?null:function(){col('tasks').del(x.id);toast('Task deleted')}});
 }
 function pageTasks(el){
-  var curList='All',mine=false,showDone=false;
+  var curList='All',mine=false,showDone=false,keep={},lastOpen={};
   var tabs=h('div'),lists=h('div'),body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var input=h('input',{type:'text',placeholder:'Add a task…','aria-label':'Add a task',enterkeyhint:'done',maxlength:'120'});
   function quick(){var v=input.value.trim();if(!v)return;
@@ -1484,7 +1538,10 @@ function pageTasks(el){
     g.classList.add('scroll');lists.append(g);
     lists.append(h('div',{class:'row',style:{marginTop:'10px'}},chipGroup([['all','Everyone'],['mine','Mine']],mine?'mine':'all',false,function(v){mine=v==='mine';upd()})));
     var items=all.filter(function(t){return (curList==='All'||t.list===curList)&&(!mine||t.assignee===S.uid)});
-    var open=items.filter(function(t){return !t.done}),done=items.filter(function(t){return t.done});
+    // a task ticked while you are on this page stays where it was (crossed out) until you leave
+    items.forEach(function(t){if(t.done&&lastOpen[t.id])keep[t.id]=1});
+    var open=items.filter(function(t){return !t.done||keep[t.id]}),done=items.filter(function(t){return t.done&&!keep[t.id]});
+    lastOpen={};items.forEach(function(t){if(!t.done)lastOpen[t.id]=1});
     body.replaceChildren();
     var t=today(),groups=[['Overdue',open.filter(function(x){return x.due&&x.due<t})],['Today',open.filter(function(x){return x.due===t})],['Upcoming',open.filter(function(x){return x.due&&x.due>t}).sort(function(a,b){return a.due<b.due?-1:1})],['No date',open.filter(function(x){return !x.due})]];
     groups.forEach(function(g){
@@ -1594,30 +1651,27 @@ function pageShop(el){
     var items=col('shop').items.filter(function(i){return i.list===curList});
     var open=items.filter(function(i){return !i.done}),done=items.filter(function(i){return i.done});
     body.replaceChildren();
-    head.replaceChildren(pageHead('Shopping',open.length?open.length+' to buy'+(done.length?' · '+done.length+' in the basket':''):'All done',
-      open.length?[h('button',{class:'btn sm',type:'button',onclick:function(){shareList(open)}},'Share')]:null));
-    if(!open.length)body.append(h('div',{class:'card'},emptyState('🛒','Nothing to buy. Type an item above.')));
+    head.replaceChildren(pageHead('Shopping',open.length?open.length+' to buy'+(done.length?' · '+done.length+' bought':''):(done.length?'All bought':'Nothing to buy'),
+      [open.length?h('button',{class:'btn sm',type:'button',onclick:function(){shareList(open)}},'Share'):null,
+       done.length?h('button',{class:'btn sm',type:'button',onclick:function(){done.forEach(function(x){col('shop').del(x.id)});toast('Cleared '+done.length+' bought')}},'Clear bought ('+done.length+')'):null].filter(Boolean)));
+    if(!items.length)body.append(h('div',{class:'card'},emptyState('🛒','Nothing to buy. Type an item above.')));
     else{
-      // one compact card, grouped by aisle
+      // one card grouped by aisle; bought items stay in place (crossed out) until cleared
       var card=h('section',{class:'card shoplist'});
       SHOP_CATS.forEach(function(c){
-        var rows=open.filter(function(i){return (i.cat||'other')===c[0]});if(!rows.length)return;
-        var g=h('div',{class:'aisle'},h('div',{class:'aislehead'},h('span',{text:String(c[1]).replace(/^[^A-Za-z0-9]+/,'')}),h('span',{class:'cnt',text:rows.length})));
+        var rows=items.filter(function(i){return (i.cat||'other')===c[0]});if(!rows.length)return;
+        var left=rows.filter(function(i){return !i.done}).length;
+        var g=h('div',{class:'aisle'},h('div',{class:'aislehead'},h('span',{text:String(c[1]).replace(/^[^A-Za-z0-9]+/,'')}),h('span',{class:'cnt',text:left?String(left):'✓'})));
         rows.sort(function(a,b){return a.name<b.name?-1:1}).forEach(function(x){g.append(shopRow(x))});card.append(g);
       });
       body.append(card);
-    }
-    if(done.length){
-      var l2=h('div',{class:'shoplist'});done.forEach(function(x){l2.append(shopRow(x))});
-      body.append(h('details',{class:'card basket'},h('summary',null,h('span',{class:'grow',text:'In the basket · '+done.length}),
-        h('button',{class:'btn sm danger',type:'button',onclick:function(e){e.preventDefault();done.forEach(function(x){col('shop').del(x.id)});toast('Cleared')}},'Clear')),l2));
     }
   }
   return upd;
 }
 function shopRow(x){
   return h('div',{class:'srow'+(x.done?' done':'')},
-    h('button',{class:'check',type:'button',role:'checkbox','aria-checked':x.done?'true':'false','aria-label':'Mark '+x.name+(x.done?' not bought':' bought'),onclick:function(){col('shop').patch(x.id,{done:!x.done})}},'✓'),
+    h('button',{class:'check',type:'button',role:'checkbox','aria-checked':x.done?'true':'false','aria-label':'Mark '+x.name+(x.done?' not bought':' bought'),onclick:function(){col('shop').patch(x.id,{done:!x.done,doneAt:!x.done?Date.now():null})}},'✓'),
     h('button',{class:'sname',type:'button',onclick:function(){shopForm(x)}},h('span',{class:'ellip',text:x.name}),x.qty?h('span',{class:'qty',text:x.qty}):null));
 }
 
@@ -2361,7 +2415,6 @@ function addMonthsKeep(s,n,day){
   var a=s.split('-').map(Number),y=a[0],m=a[1]-1+n;y+=Math.floor(m/12);m=((m%12)+12)%12;
   var last=new Date(y,m+1,0).getDate();return y+'-'+pad(m+1)+'-'+pad(Math.min(day||a[2],last));
 }
-function nextDue(it){var n=HREPEAT_MONTHS[it.repeat];return n?addMonthsKeep(it.due,n,it.day):null}
 // Autopay items roll forward on their own once the date has passed.
 function effDue(it){
   var d=it.due,t=today(),n=HREPEAT_MONTHS[it.repeat],guard=0;
