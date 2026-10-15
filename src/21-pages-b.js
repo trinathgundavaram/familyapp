@@ -156,8 +156,13 @@ function pageShop(el){
   }
   input.addEventListener('input',drawSug);
   input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();quick()}});
-  el.append(pageHead('Shopping'),segControl([['t','Tasks'],['s','Shopping']],'s',function(v){if(v==='t')go('tasks')}),
-    h('div',{class:'quickadd'},input,h('button',{class:'btn primary',type:'button',onclick:quick},'Add')),sug,lists,body);
+  var head=h('div');
+  function shareList(open){
+    var text=curList+':\n'+open.map(function(i){return '• '+i.name+(i.qty?' ('+i.qty+')':'')}).join('\n');
+    if(navigator.share)navigator.share({title:curList,text:text}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(text).then(function(){toast('List copied')});
+  }
+  el.append(head,segControl([['t','Tasks'],['s','Shopping']],'s',function(v){if(v==='t')go('tasks')}),
+    h('div',{class:'quickadd shopadd'},input,h('button',{class:'ibtn brand',type:'button','aria-label':'Add item',onclick:quick},ico('plus'))),sug,lists,body);
   function upd(){
     var ls=shopLists();if(ls.indexOf(curList)<0)curList='Groceries';
     lists.replaceChildren();
@@ -171,25 +176,29 @@ function pageShop(el){
     var items=col('shop').items.filter(function(i){return i.list===curList});
     var open=items.filter(function(i){return !i.done}),done=items.filter(function(i){return i.done});
     body.replaceChildren();
+    head.replaceChildren(pageHead('Shopping',open.length?open.length+' to buy'+(done.length?' · '+done.length+' in the basket':''):'All done',
+      open.length?[h('button',{class:'btn sm',type:'button',onclick:function(){shareList(open)}},'Share')]:null));
     if(!open.length)body.append(h('div',{class:'card'},emptyState('🛒','Nothing to buy. Type an item above.')));
-    SHOP_CATS.forEach(function(c){
-      var rows=open.filter(function(i){return (i.cat||'other')===c[0]});if(!rows.length)return;
-      var card=h('section',{class:'card'},h('div',{class:'label',text:c[1]})),l=h('div',{class:'list'});
-      rows.sort(function(a,b){return a.name<b.name?-1:1}).forEach(function(x){l.append(shopRow(x))});card.append(l);body.append(card);
-    });
-    if(done.length){
-      var c2=h('section',{class:'card'},h('div',{class:'row'},h('div',{class:'label grow',text:'In the basket · '+done.length}),h('button',{class:'btn sm danger',type:'button',onclick:function(){done.forEach(function(x){col('shop').del(x.id)});toast('Cleared')}},'Clear')));
-      var l2=h('div',{class:'list'});done.forEach(function(x){l2.append(shopRow(x))});c2.append(l2);body.append(c2);
+    else{
+      // one compact card, grouped by aisle
+      var card=h('section',{class:'card shoplist'});
+      SHOP_CATS.forEach(function(c){
+        var rows=open.filter(function(i){return (i.cat||'other')===c[0]});if(!rows.length)return;
+        var g=h('div',{class:'aisle'},h('div',{class:'aislehead'},h('span',{text:String(c[1]).replace(/^[^A-Za-z0-9]+/,'')}),h('span',{class:'cnt',text:rows.length})));
+        rows.sort(function(a,b){return a.name<b.name?-1:1}).forEach(function(x){g.append(shopRow(x))});card.append(g);
+      });
+      body.append(card);
     }
-    if(open.length){body.append(h('button',{class:'btn ghost wide',type:'button',onclick:function(){
-      var text=curList+':\n'+open.map(function(i){return '• '+i.name+(i.qty?' ('+i.qty+')':'')}).join('\n');
-      if(navigator.share)navigator.share({title:curList,text:text}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(text).then(function(){toast('List copied')});
-    }},'Share this list'))}
+    if(done.length){
+      var l2=h('div',{class:'shoplist'});done.forEach(function(x){l2.append(shopRow(x))});
+      body.append(h('details',{class:'card basket'},h('summary',null,h('span',{class:'grow',text:'In the basket · '+done.length}),
+        h('button',{class:'btn sm danger',type:'button',onclick:function(e){e.preventDefault();done.forEach(function(x){col('shop').del(x.id)});toast('Cleared')}},'Clear')),l2));
+    }
   }
   return upd;
 }
 function shopRow(x){
-  return h('div',{class:'item'+(x.done?' done':'')},
+  return h('div',{class:'srow'+(x.done?' done':'')},
     h('button',{class:'check',type:'button',role:'checkbox','aria-checked':x.done?'true':'false','aria-label':'Mark '+x.name+(x.done?' not bought':' bought'),onclick:function(){col('shop').patch(x.id,{done:!x.done})}},'✓'),
-    h('button',{class:'t',type:'button',style:{background:'none',border:0,textAlign:'left',padding:0},onclick:function(){shopForm(x)}},h('b',{text:x.name}),x.qty?h('small',{text:x.qty}):null));
+    h('button',{class:'sname',type:'button',onclick:function(){shopForm(x)}},h('span',{class:'ellip',text:x.name}),x.qty?h('span',{class:'qty',text:x.qty}):null));
 }

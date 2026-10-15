@@ -1,6 +1,6 @@
 /* ================= calendar data ================= */
 var KINDS=[['event','Event','📌'],['appt','Appointment','🩺'],['school','School','🎒'],['work','Work','💼'],['activity','Activity','⚽'],['birthday','Birthday','🎂']];
-var KIND_COLOR={event:'#00A884',appt:'#EF4444',school:'#F59E0B',work:'#0EA5E9',activity:'#10B981',birthday:'#EC4899'};
+var KIND_COLOR={event:'#12A37A',appt:'#EF4444',school:'#F59E0B',work:'#0EA5E9',activity:'#10B981',birthday:'#EC4899'};
 function kindIcon(k){var x=KINDS.filter(function(a){return a[0]===k})[0];return x?x[2]:'📌'}
 function occurs(ev,date){
   if(!ev.date||date<ev.date)return false;
@@ -69,6 +69,7 @@ function pageHome(el){
     var t=today(),m=me();
     head.replaceChildren(h('h1',{text:greet()+(m.name?', '+m.name:'')}),h('p',{text:dayLabel(t,true)+(S.fam.name?' · '+S.fam.name:'')}));
 
+    var hc=houseDueCard();if(hc)grid.append(hc);
     // today
     var c=card(),evs=eventsOn(t),tsk=col('tasks').items.filter(function(x){return !x.done&&x.due&&x.due<=t}).sort(function(a,b){return a.due<b.due?-1:1});
     c.append(cardHead('📅','var(--c-cal)','Today','Calendar',function(){go('cal')}));
@@ -97,8 +98,6 @@ function pageHome(el){
       h('div',{class:'kpi'},h('b',{class:'num',text:money(spent)}),h('span',{text:'Spent'})),
       h('div',{class:'kpi'},h('b',{class:'num',style:{color:inc-spent<0?'var(--over)':''},text:money(inc-spent)}),h('span',{text:'Left'}))));
     if(bud>0){var pb=h('i');pb.style.width=Math.min(100,spent/bud*100)+'%';if(spent>bud)pb.className='over';c.append(h('div',{class:'bar'},pb),h('div',{class:'small muted',text:money(spent)+' of '+money(bud)+' budgeted'}))}
-    var due=dueBills().slice(0,2);
-    due.forEach(function(b){c.append(h('div',{class:'row small'},h('span',{class:'pill '+(b.late?'red':'')},b.late?'Overdue':'Due '+dayLabel(b.dueDate)),h('span',{class:'grow ellip',text:b.name}),h('b',{text:money(b.amount)})))});
 
     // food
     c=card();var fd=foodSummary(S.uid,t);
@@ -131,7 +130,7 @@ function pageHome(el){
 function pageMore(el){
   el.append(pageHead('More'));
   var g=h('div',{class:'grid g2'});el.append(g);
-  [['timetable','🗓️','Timetable','School, work and activity schedule','--c-time'],['food','🥗','Calories','Track what you eat','--c-food'],['trips','✈️','Trips','Plan holidays, packing, bookings','--c-trips'],['meals','🍽️','Meal plan','Plan the week and shop for it','--c-meals'],['notes','📒','Family info','Wi-Fi, doctors, school, emergency numbers','--c-notes'],['shop','🛒','Shopping','Shared shopping lists','--c-shop'],['family','⚙️','Family & settings','Members, invite code, preferences','--c-family']].forEach(function(r){
+  [['house','🔑','Household','Insurance, bills, mortgage, subscriptions, deadlines','--c-house'],['timetable','🗓️','Timetable','School, work and activity schedule','--c-time'],['food','🥗','Calories','Track what you eat','--c-food'],['trips','✈️','Trips','Plan holidays, packing, bookings','--c-trips'],['meals','🍽️','Meal plan','Plan the week and shop for it','--c-meals'],['notes','📒','Family info','Wi-Fi, doctors, school, emergency numbers','--c-notes'],['shop','🛒','Shopping','Shared shopping lists','--c-shop'],['family','⚙️','Family & settings','Members, invite code, preferences','--c-family']].forEach(function(r){
     g.append(h('button',{class:'card tap',type:'button',onclick:function(){go(r[0])}},h('div',{class:'chead'},icoTile(r[1],'var('+r[4]+')'),h('div',{class:'grow'},h('h2',{text:r[2]}),h('div',{class:'muted small',text:r[3]})),h('span',{class:'chev','aria-hidden':'true'},'›'))));
   });
 }

@@ -47,7 +47,7 @@ function greet(){var hh=new Date().getHours();return hh<5?'Good night':hh<12?'Go
 /* ================= state ================= */
 var S={mode:'local',uid:'local',fam:{currency:'$',name:'Our family'},famId:null,members:{},ready:false,auth:null};
 var EMOJIS=['🦊','🐼','🐯','🐸','🦉','🐙','🦄','🐻','🐶','🐱','🦁','🐧'];
-var COLORS=['#00A884','#EF4444','#10B981','#F59E0B','#0EA5E9','#EC4899','#8B5CF6','#14B8A6'];
+var COLORS=['#12A37A','#EF4444','#10B981','#F59E0B','#0EA5E9','#EC4899','#8B5CF6','#14B8A6'];
 function me(){return S.members[S.uid]||{name:'Me',emoji:'🦊',color:COLORS[0]}}
 function memberList(){return Object.keys(S.members).map(function(id){return Object.assign({id:id},S.members[id])}).sort(function(a,b){return (a.name||'').localeCompare(b.name||'')})}
 function nameOf(uid){var m=S.members[uid];return uid===S.uid?(m&&m.name)||'Me':(m&&m.name)||'Family'}
@@ -60,11 +60,11 @@ function avatars(ids){
 
 /* ================= store ================= */
 var Store={cloud:false,fdb:null,FS:null,cols:{},ucols:{},unsubs:[]};
-var FAMCOLS=['events','tasks','shop','txns','bills','budgets','goals','trips','notes','meals'];
+var FAMCOLS=['events','tasks','shop','txns','bills','house','budgets','goals','trips','notes','meals'];
 var refreshQueued=false;
 function refresh(){
   if(refreshQueued)return;refreshQueued=true;
-  requestAnimationFrame(function(){refreshQueued=false;if(App.upd){try{App.upd()}catch(e){console.error(e)}}});
+  requestAnimationFrame(function(){refreshQueued=false;if(App.upd){try{App.upd()}catch(e){console.error(e)}}try{updBadge()}catch(e){}});
 }
 function LSget(k,d){try{var j=JSON.parse(localStorage.getItem(k));return j==null?d:j}catch(e){return d}}
 function LSset(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
@@ -207,6 +207,7 @@ async function startStore(){
     if(!$('#status').textContent||$('#status').textContent==='Loading…')setStatus('Saved on this device only. Family sharing turns on after the one-time setup (see README).');
   }
   FAMCOLS.forEach(col);
+  migrateBills();
   S.ready=true;
 }
 
@@ -360,11 +361,20 @@ var ICONS={
   heart:'<path d="M20.4 5.9a4.9 4.9 0 0 0-7.4 0L12 7l-1-1.1a4.9 4.9 0 0 0-7.4 6.4L12 20.5l8.4-8.2a4.9 4.9 0 0 0 0-6.4z"/>',
   briefcase:'<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7M3 13h18"/>',
   shirt:'<path d="M8.5 3.5 3.5 6l-1 4.5 3 1V20.5h13v-9l3-1-1-4.5-5-2.5c-.4 1.5-1.8 2.5-3.5 2.5S8.9 5 8.5 3.5z"/>',
+  shield:'<path d="M12 3.2 4.8 6v5.5c0 4.5 3 7.9 7.2 9.3 4.2-1.4 7.2-4.8 7.2-9.3V6z"/><path d="m9 12 2.2 2.2 3.8-4"/>',
+  bolt:'<path d="M13.2 2.8 5.2 13.4h6.2l-1 7.8 8-10.6h-6.2z"/>',
+  bank:'<path d="M3.5 9.5 12 4l8.5 5.5M5.5 10.5v7M10 10.5v7M14 10.5v7M18.5 10.5v7M3.5 20.5h17"/>',
+  repeat:'<path d="m17 2.8 3.2 3.2L17 9.2M3.8 11V9.5A3.5 3.5 0 0 1 7.3 6h12.9M7 21.2 3.8 18 7 14.8M20.2 13v1.5a3.5 3.5 0 0 1-3.5 3.5H3.8"/>',
+  hourglass:'<path d="M6.5 3.5h11M6.5 20.5h11M7.5 3.5c0 4.5 4.5 5.5 4.5 8.5s-4.5 4-4.5 8.5M16.5 3.5c0 4.5-4.5 5.5-4.5 8.5s4.5 4 4.5 8.5"/>',
+  link:'<path d="M10 14a4.2 4.2 0 0 0 6 0l3-3a4.2 4.2 0 0 0-6-6l-1 1M14 10a4.2 4.2 0 0 0-6 0l-3 3a4.2 4.2 0 0 0 6 6l1-1"/>',
+  phone:'<path d="M8.2 3.5H5.5a2 2 0 0 0-2 2.1C4 13.6 10.4 20 18.4 20.5a2 2 0 0 0 2.1-2v-2.7l-4.3-1.7-1.6 2.1a12 12 0 0 1-5.8-5.8l2.1-1.6z"/>',
+  bell:'<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',
+  key:'<circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8 20 3M16.5 6.5 19 9M14 9l2 2"/>',
   search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
   download:'<path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M4.5 19.5h15"/>',
   target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>'
 };
-var EMO2IC={'🏠':'home','🏡':'home','📅':'calendar','🗓️':'clock','✅':'tasks','🛒':'cart','💰':'wallet','💸':'receipt','🥗':'apple','✈️':'suitcase','🍽️':'utensils','📒':'book','⚙️':'sliders','⋯':'more','📌':'pin','🎉':'star','🪪':'idcard','🩺':'heart','💼':'briefcase','👕':'shirt','👨‍👩‍👧':'users','🎯':'target','+':'plus'};
+var EMO2IC={'🏠':'home','🏡':'home','📅':'calendar','🗓️':'clock','✅':'tasks','🛒':'cart','💰':'wallet','💸':'receipt','🥗':'apple','✈️':'suitcase','🍽️':'utensils','📒':'book','⚙️':'sliders','⋯':'more','📌':'pin','🎉':'star','🪪':'idcard','🩺':'heart','💼':'briefcase','👕':'shirt','👨‍👩‍👧':'users','🎯':'target','🔑':'key','+':'plus'};
 function ico(x,size){
   var k=ICONS[x]?x:EMO2IC[x];if(!k)return document.createTextNode(x==null?'':String(x));
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -424,7 +434,7 @@ function updCalTab(){
   });
 }
 function buildShell(){
-  var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['timetable','Timetable','🗓️'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['food','Calories','🥗'],['trips','Trips','✈️'],['meals','Meal plan','🍽️'],['notes','Family info','📒']];
+  var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['timetable','Timetable','🗓️'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['house','Household','🔑'],['food','Calories','🥗'],['trips','Trips','✈️'],['meals','Meal plan','🍽️'],['notes','Family info','📒']];
   var side=$('#side');
   side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},ico('home')),h('div',null,h('b',{text:'Nourish'}),h('small',{text:'Family hub'}))));
   nav.forEach(function(n){side.append(h('button',{class:'navi',type:'button','data-route':n[0],onclick:function(){go(n[0])}},h('span',{class:'ic'},n[0]==='cal'?calIcon():ico(n[2])),n[1]))});
