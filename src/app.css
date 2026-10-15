@@ -501,3 +501,41 @@ details.manual{border:0;background:var(--soft)}
 .calhint{display:flex;justify-content:center;padding-top:4px}
 @media (max-width:899px){.tt{grid-template-columns:1fr}.ttcol:not(.sel){display:none}.ttcol h3{display:none}.ttcell{padding:10px 12px}.ttcell b{font-size:.95rem}}
 @media (min-width:900px){.wkstrip,.mobday{display:none}.tt{grid-template-columns:repeat(7,minmax(0,1fr))}.ttcol{min-height:220px;padding:0 2px}}
+
+/* =====================================================================
+   v4 palette: light blue (SoFi cyan) with navy-blue text, no purple
+   ===================================================================== */
+:root{
+  --bg:#FFFFFF; --card:#FFFFFF; --ink:#0F2A3D; --ink2:#34505F; --muted:#6A8291; --line:#E1EEF3; --soft:#EEF7FA; --field:#F2F9FB;
+  --brand:#00A2C7; --brand-strong:#00809E; --brand-soft:#D6F0F7; --brand-tint:#EEF9FC; --brand-ink:#FFFFFF;
+  --accent:#00A2C7; --over:#E5484D; --good:#0E9F7E;
+  --shadow-lg:0 20px 48px rgba(15,42,61,.14),0 2px 8px rgba(15,42,61,.05); --scrim:rgba(15,42,61,.40);
+  --c-home:#00A2C7; --c-cal:#E5677A; --c-tasks:#2F7FD8; --c-shop:#E8963A; --c-money:#0E9F7E; --c-food:#2FA36B; --c-trips:#00A2C7; --c-notes:#3E93B8; --c-family:#E07A8E; --c-time:#1F8FA8; --c-house:#1A8FB0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1922; --card:#0F222D; --ink:#EAF5F9; --ink2:#C3D7E0; --muted:#8FA8B5; --line:#1C3442; --soft:#132C39; --field:#132C39;
+    --brand:#2BC0E4; --brand-strong:#7AD9F0; --brand-soft:#0F3A4A; --brand-tint:#0D2C38; --brand-ink:#04222C;
+    --shadow-lg:0 20px 48px rgba(0,0,0,.55); --scrim:rgba(2,10,14,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1922; --card:#0F222D; --ink:#EAF5F9; --ink2:#C3D7E0; --muted:#8FA8B5; --line:#1C3442; --soft:#132C39; --field:#132C39;
+  --brand:#2BC0E4; --brand-strong:#7AD9F0; --brand-soft:#0F3A4A; --brand-tint:#0D2C38; --brand-ink:#04222C;
+  --shadow-lg:0 20px 48px rgba(0,0,0,.55); --scrim:rgba(2,10,14,.65);
+}
+/* light-blue banner */
+.hero{background:radial-gradient(360px 220px at 105% -20%,rgba(255,255,255,.35),transparent 70%),linear-gradient(135deg,#00A2C7 0%,#33B9D8 100%);color:#fff}
+/* selected states use the light blue, not dark ink */
+.chip[aria-pressed="true"],.wkday[aria-pressed="true"]{background:var(--brand);color:#fff}
+.wkday[aria-pressed="true"] span{color:rgba(255,255,255,.8)}
+.wkday[aria-pressed="true"] b{color:#fff}
+.wkday[aria-pressed="true"] i.on{background:#fff}
+.btn.ghost{border-color:var(--brand);color:var(--brand-strong)}
+.quick .qi{background:var(--brand-tint);color:var(--brand-strong)}
+.logo{background:linear-gradient(135deg,#33B9D8,#00809E);box-shadow:0 10px 24px rgba(0,128,158,.25)}
+.toast{background:#0F2A3D}
+.toast button{color:#7AD9F0}
+.fab{box-shadow:0 10px 26px rgba(0,162,199,.35)}
+.seg button[aria-pressed="true"]{box-shadow:0 1px 3px rgba(15,42,61,.12)}
+@media (min-width:900px){.navi[aria-current="page"]{box-shadow:0 1px 3px rgba(15,42,61,.08)}}
