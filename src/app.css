@@ -539,3 +539,24 @@ details.manual{border:0;background:var(--soft)}
 .fab{box-shadow:0 10px 26px rgba(0,162,199,.35)}
 .seg button[aria-pressed="true"]{box-shadow:0 1px 3px rgba(15,42,61,.12)}
 @media (min-width:900px){.navi[aria-current="page"]{box-shadow:0 1px 3px rgba(15,42,61,.08)}}
+
+/* =====================================================================
+   laptop: use the full width
+   ===================================================================== */
+@media (min-width:900px){
+  .page,.page.wide{max-width:1440px}
+  .main{padding:36px 44px 72px}
+  .g2{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+  .cols>.calbar,.cols>.span,.cols>.datebar{grid-column:1/-1}
+}
+@media (min-width:1100px){
+  .cols{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px!important;align-items:start}
+  .cols>*{min-width:0}
+  .cols>.card{border-top:1px solid var(--line)}
+  .cols>.card:nth-child(-n+2){border-top:0}
+  .calbody.month{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr);gap:0 48px;align-items:start}
+  .calbody.month>.card{border-top:0;padding-top:0}
+  .shoplist{columns:3}
+}
+@media (min-width:1500px){.cols{grid-template-columns:repeat(3,minmax(0,1fr))}.cols>.card:nth-child(-n+3){border-top:0}}
+@media (min-width:1100px){.cols>.span~.card:nth-child(-n+3){border-top:0}}

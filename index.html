@@ -559,6 +559,27 @@ details.manual{border:0;background:var(--soft)}
 .seg button[aria-pressed="true"]{box-shadow:0 1px 3px rgba(15,42,61,.12)}
 @media (min-width:900px){.navi[aria-current="page"]{box-shadow:0 1px 3px rgba(15,42,61,.08)}}
 
+/* =====================================================================
+   laptop: use the full width
+   ===================================================================== */
+@media (min-width:900px){
+  .page,.page.wide{max-width:1440px}
+  .main{padding:36px 44px 72px}
+  .g2{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+  .cols>.calbar,.cols>.span,.cols>.datebar{grid-column:1/-1}
+}
+@media (min-width:1100px){
+  .cols{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px!important;align-items:start}
+  .cols>*{min-width:0}
+  .cols>.card{border-top:1px solid var(--line)}
+  .cols>.card:nth-child(-n+2){border-top:0}
+  .calbody.month{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr);gap:0 48px;align-items:start}
+  .calbody.month>.card{border-top:0;padding-top:0}
+  .shoplist{columns:3}
+}
+@media (min-width:1500px){.cols{grid-template-columns:repeat(3,minmax(0,1fr))}.cols>.card:nth-child(-n+3){border-top:0}}
+@media (min-width:1100px){.cols>.span~.card:nth-child(-n+3){border-top:0}}
+
 </style>
 </head>
 <body>
@@ -1210,7 +1231,7 @@ function pageCal(el,startView){
     seg.replaceChildren(segControl([['week','Week'],['month','Month']],view,setView));
     var mem=memberList();filt.replaceChildren();
     if(mem.length>1){filt.append(chipGroup([['','Everyone']].concat(mem.map(function(m){return [m.id,m.name,m.emoji]})),who,false,function(v){who=v;upd()}));filt.firstChild.classList.add('scroll')}
-    body.replaceChildren();
+    body.replaceChildren();body.classList.toggle('month',view==='month');
     (view==='month'?monthView:weekView)();
   }
   return upd;
@@ -1220,7 +1241,7 @@ function pageTimetable(el){return pageCal(el,'week')}
 /* ================= FAMILY & SETTINGS ================= */
 function applySize(s){if(s==='n')document.documentElement.removeAttribute('data-size');else document.documentElement.setAttribute('data-size',s);LSset('nourish2:size',s)}
 function pageFamily(el){
-  var wrap=h('div',{class:'page-inner',style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var wrap=h('div',{class:'page-inner cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   el.append(pageHead('Family & settings'),wrap);
   function inviteText(){return 'Join our family on Gundavaram. Open '+location.href.split('#')[0]+' , sign in with Google, then choose “Join with a code” and enter: '+S.famId}
   function share(){
@@ -1348,7 +1369,7 @@ var INFO_SECTIONS=[
 ];
 function pagePerson(el,param){
   var uid=param&&S.members[param]?param:S.uid;
-  var head=h('div'),wrap=h('div',{class:'page-inner',style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var head=h('div'),wrap=h('div',{class:'page-inner cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   el.append(head,wrap);
   function show(f,v){
     if(f.type==='select'){var o=f.opts.filter(function(x){return x[0]===v})[0];return o?o[1]:v}
@@ -1448,7 +1469,7 @@ function taskForm(x,defaults){
 }
 function pageTasks(el){
   var curList='All',mine=false,showDone=false;
-  var tabs=h('div'),lists=h('div'),body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var tabs=h('div'),lists=h('div'),body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var input=h('input',{type:'text',placeholder:'Add a task…','aria-label':'Add a task',enterkeyhint:'done',maxlength:'120'});
   function quick(){var v=input.value.trim();if(!v)return;
     col('tasks').add({title:v,list:curList==='All'?'To-do':curList,priority:0,repeat:'none',assignee:mine?S.uid:'',due:'',done:false});input.value='';input.focus()}
@@ -1659,7 +1680,7 @@ function goalForm(g){
 function pageMoney(el){
   var mk=monthKey(today()),view='ov',q='';
   var nav=monthNav(function(){return mk},function(v){mk=v;upd()});
-  var body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var seg=segControl([['ov','Overview'],['tx','Activity'],['bills','Bills'],['goals','Goals']],view,function(v){if(v==='bills'){go('house');return}view=v;upd()});
   el.append(pageHead('Money',null,[h('button',{class:'btn sm',type:'button',onclick:function(){downloadTxns()}},ico('download'),'CSV')]),seg,nav,body,fab('Add',function(){txnForm()}));
   function downloadTxns(){
@@ -2090,12 +2111,12 @@ function macroBars(t,tg){
 function pageFood(el,param){
   var date=today(),view=param&&param!=='me'&&S.members[param]?param:S.uid,tab='day';
   var seg=segControl([['day','Day'],['week','Week'],['fam','Family']],tab,function(v){tab=v;upd()});
-  var body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var banner=h('div',{class:'card',style:{background:'var(--ink)',color:'var(--bg)'},hidden:true});
   el.append(pageHead('Calories',null,[h('button',{class:'btn sm',type:'button',onclick:function(){goalSheet(view)}},ico('target'),'Targets')]),seg,banner,body,fab('Add food',function(){openAddFood(date,null,view)}));
   function ro(){return false} // everyone in the family can edit any log
   function dateBar(){
-    return h('div',{class:'card',style:{padding:'8px',flexDirection:'row',alignItems:'center'}},
+    return h('div',{class:'card span datebar',style:{padding:'8px 0',flexDirection:'row',alignItems:'center'}},
       h('button',{class:'ibtn plain',type:'button','aria-label':'Previous day',onclick:function(){date=addDays(date,-1);upd()}},'‹'),
       h('div',{class:'grow',style:{textAlign:'center',fontWeight:'800'}},relDay(date),h('div',{class:'muted small',style:{fontWeight:'500'},text:dayLabel(date,true)})),
       h('button',{class:'ibtn plain',type:'button','aria-label':'Next day',disabled:date>=today(),onclick:function(){date=addDays(date,1);upd()}},'›'));
@@ -2204,7 +2225,7 @@ function pageTrips(el,id){
   };
 }
 function pageTrip(el,id){
-  var tab='ov',body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var tab='ov',body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var head=h('div'),seg;
   el.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){go('trips')}},'‹ All trips'),head,body);
   function T(){return col('trips').get(id)}
@@ -2554,7 +2575,7 @@ function migrateBills(){
 /* Page */
 function pageHouse(el){
   var filter='all';
-  var seg=h('div',{class:'chips scroll'}),body=h('div',{style:{display:'flex',flexDirection:'column',gap:'14px'}});
+  var seg=h('div',{class:'chips scroll'}),body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'14px'}});
   el.append(pageHead('Household','Insurance, bills, subscriptions and deadlines',[h('button',{class:'btn sm nowrap',type:'button',onclick:calHelp},ico('bell'),'Reminders')]),seg,body,
     fab('Add',function(){houseForm(null,filter==='all'?'utility':filter)}));
   function drawSeg(){

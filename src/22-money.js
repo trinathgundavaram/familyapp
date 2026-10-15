@@ -57,7 +57,7 @@ function goalForm(g){
 function pageMoney(el){
   var mk=monthKey(today()),view='ov',q='';
   var nav=monthNav(function(){return mk},function(v){mk=v;upd()});
-  var body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var seg=segControl([['ov','Overview'],['tx','Activity'],['bills','Bills'],['goals','Goals']],view,function(v){if(v==='bills'){go('house');return}view=v;upd()});
   el.append(pageHead('Money',null,[h('button',{class:'btn sm',type:'button',onclick:function(){downloadTxns()}},ico('download'),'CSV')]),seg,nav,body,fab('Add',function(){txnForm()}));
   function downloadTxns(){

@@ -231,7 +231,7 @@ function migrateBills(){
 /* Page */
 function pageHouse(el){
   var filter='all';
-  var seg=h('div',{class:'chips scroll'}),body=h('div',{style:{display:'flex',flexDirection:'column',gap:'14px'}});
+  var seg=h('div',{class:'chips scroll'}),body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'14px'}});
   el.append(pageHead('Household','Insurance, bills, subscriptions and deadlines',[h('button',{class:'btn sm nowrap',type:'button',onclick:calHelp},ico('bell'),'Reminders')]),seg,body,
     fab('Add',function(){houseForm(null,filter==='all'?'utility':filter)}));
   function drawSeg(){

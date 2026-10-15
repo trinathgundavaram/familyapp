@@ -42,7 +42,7 @@ function pageTrips(el,id){
   };
 }
 function pageTrip(el,id){
-  var tab='ov',body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var tab='ov',body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var head=h('div'),seg;
   el.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){go('trips')}},'‹ All trips'),head,body);
   function T(){return col('trips').get(id)}

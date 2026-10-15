@@ -189,7 +189,7 @@ function pageCal(el,startView){
     seg.replaceChildren(segControl([['week','Week'],['month','Month']],view,setView));
     var mem=memberList();filt.replaceChildren();
     if(mem.length>1){filt.append(chipGroup([['','Everyone']].concat(mem.map(function(m){return [m.id,m.name,m.emoji]})),who,false,function(v){who=v;upd()}));filt.firstChild.classList.add('scroll')}
-    body.replaceChildren();
+    body.replaceChildren();body.classList.toggle('month',view==='month');
     (view==='month'?monthView:weekView)();
   }
   return upd;
@@ -199,7 +199,7 @@ function pageTimetable(el){return pageCal(el,'week')}
 /* ================= FAMILY & SETTINGS ================= */
 function applySize(s){if(s==='n')document.documentElement.removeAttribute('data-size');else document.documentElement.setAttribute('data-size',s);LSset('nourish2:size',s)}
 function pageFamily(el){
-  var wrap=h('div',{class:'page-inner',style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var wrap=h('div',{class:'page-inner cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   el.append(pageHead('Family & settings'),wrap);
   function inviteText(){return 'Join our family on Gundavaram. Open '+location.href.split('#')[0]+' , sign in with Google, then choose “Join with a code” and enter: '+S.famId}
   function share(){
@@ -327,7 +327,7 @@ var INFO_SECTIONS=[
 ];
 function pagePerson(el,param){
   var uid=param&&S.members[param]?param:S.uid;
-  var head=h('div'),wrap=h('div',{class:'page-inner',style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var head=h('div'),wrap=h('div',{class:'page-inner cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   el.append(head,wrap);
   function show(f,v){
     if(f.type==='select'){var o=f.opts.filter(function(x){return x[0]===v})[0];return o?o[1]:v}

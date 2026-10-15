@@ -298,12 +298,12 @@ function macroBars(t,tg){
 function pageFood(el,param){
   var date=today(),view=param&&param!=='me'&&S.members[param]?param:S.uid,tab='day';
   var seg=segControl([['day','Day'],['week','Week'],['fam','Family']],tab,function(v){tab=v;upd()});
-  var body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var banner=h('div',{class:'card',style:{background:'var(--ink)',color:'var(--bg)'},hidden:true});
   el.append(pageHead('Calories',null,[h('button',{class:'btn sm',type:'button',onclick:function(){goalSheet(view)}},ico('target'),'Targets')]),seg,banner,body,fab('Add food',function(){openAddFood(date,null,view)}));
   function ro(){return false} // everyone in the family can edit any log
   function dateBar(){
-    return h('div',{class:'card',style:{padding:'8px',flexDirection:'row',alignItems:'center'}},
+    return h('div',{class:'card span datebar',style:{padding:'8px 0',flexDirection:'row',alignItems:'center'}},
       h('button',{class:'ibtn plain',type:'button','aria-label':'Previous day',onclick:function(){date=addDays(date,-1);upd()}},'‹'),
       h('div',{class:'grow',style:{textAlign:'center',fontWeight:'800'}},relDay(date),h('div',{class:'muted small',style:{fontWeight:'500'},text:dayLabel(date,true)})),
       h('button',{class:'ibtn plain',type:'button','aria-label':'Next day',disabled:date>=today(),onclick:function(){date=addDays(date,1);upd()}},'›'));

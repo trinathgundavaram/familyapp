@@ -51,7 +51,7 @@ function taskForm(x,defaults){
 }
 function pageTasks(el){
   var curList='All',mine=false,showDone=false;
-  var tabs=h('div'),lists=h('div'),body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var tabs=h('div'),lists=h('div'),body=h('div',{class:'cols',style:{display:'flex',flexDirection:'column',gap:'16px'}});
   var input=h('input',{type:'text',placeholder:'Add a task…','aria-label':'Add a task',enterkeyhint:'done',maxlength:'120'});
   function quick(){var v=input.value.trim();if(!v)return;
     col('tasks').add({title:v,list:curList==='All'?'To-do':curList,priority:0,repeat:'none',assignee:mine?S.uid:'',due:'',done:false});input.value='';input.focus()}
