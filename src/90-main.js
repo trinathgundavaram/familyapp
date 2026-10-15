@@ -1,7 +1,7 @@
 App.routes={
-  home:{page:pageHome,wide:true},more:{page:pageMore},cal:{page:pageCal},timetable:{page:pageTimetable,wide:true},
+  home:{page:pageHome,wide:true},more:{page:pageMore},cal:{page:pageCal,wide:true},timetable:{page:pageTimetable,wide:true},
   tasks:{page:pageTasks},shop:{page:pageShop},money:{page:pageMoney},food:{page:pageFood},
-  trips:{page:pageTrips,wide:true},meals:{page:pageMeals,wide:true},notes:{page:pageNotes,wide:true},family:{page:pageFamily},person:{page:pagePerson},house:{page:pageHouse}
+  trips:{page:pageTrips,wide:true},notes:{page:pageNotes,wide:true},family:{page:pageFamily},person:{page:pagePerson},house:{page:pageHouse}
 };
 (async function main(){
   try{

@@ -127,39 +127,7 @@ function pageTrip(el,id){
   return upd;
 }
 
-/* ================= MEALS ================= */
 function weekStart(d){var x=parseD(d),k=(x.getDay()+6)%7;return addDays(d,-k)}
-function mealForm(date,meal,existing){
-  var key=date+'_'+meal;existing=existing||{};
-  openForm({title:dayLabel(date)+' · '+meal,values:{text:existing.text||'',ing:existing.ing||''},fields:[{k:'text',label:'What are we eating?',ph:'Chicken curry & rice'},{k:'ing',label:'Ingredients to buy (optional, comma separated)',ph:'chicken, onions, rice, yogurt',type:'textarea',rows:2}],
-    save:function(v){if(!v.text){col('meals').del(key);return}col('meals').save({id:key,date:date,meal:meal,text:v.text,ing:v.ing})},
-    del:existing.text?function(){col('meals').del(key)}:null,
-    extra:null});
-}
-function pageMeals(el){
-  var ws=weekStart(today());
-  var lbl=h('div',{class:'grow',style:{textAlign:'center',fontWeight:'800'}}),body=h('div',{class:'grid g2'});
-  var nav=h('div',{class:'row'},h('button',{class:'ibtn plain',type:'button','aria-label':'Previous week',onclick:function(){ws=addDays(ws,-7);upd()}},'‹'),lbl,h('button',{class:'ibtn plain',type:'button','aria-label':'Next week',onclick:function(){ws=addDays(ws,7);upd()}},'›'));
-  var shopBtn=h('button',{class:'btn primary wide',type:'button',onclick:function(){
-    var ings=[];col('meals').items.filter(function(m){return m.date>=ws&&m.date<=addDays(ws,6)&&m.ing}).forEach(function(m){m.ing.split(',').forEach(function(s){s=s.trim();if(s&&ings.map(function(x){return x.toLowerCase()}).indexOf(s.toLowerCase())<0)ings.push(s)})});
-    if(!ings.length){toast('Add ingredients to your meals first');return}
-    var n=addShopItems(ings.join(','),'Groceries');toast(n+' items added to Groceries','View',function(){go('shop')});
-  }},'🛒 Add this week’s ingredients to my shopping list');
-  el.append(pageHead('Meal plan','What’s for dinner?'),nav,body,shopBtn);
-  function upd(){
-    lbl.textContent=dayLabel(ws)+' – '+dayLabel(addDays(ws,6));body.replaceChildren();
-    for(var i=0;i<7;i++){(function(d){
-      var c=h('section',{class:'card'},h('b',{text:(d===today()?'Today · ':'')+dayLabel(d,true)}));
-      var l=h('div',{class:'list'});
-      [['breakfast','Breakfast','🍳'],['lunch','Lunch','🥗'],['dinner','Dinner','🍲']].forEach(function(m){
-        var x=col('meals').get(d+'_'+m[0]);
-        l.append(h('button',{class:'item',type:'button',onclick:function(){mealForm(d,m[0],x)}},h('span',{text:m[2]}),h('div',{class:'t'},h('small',{text:m[1]}),x?h('b',{text:x.text}):h('span',{class:'muted',text:'Tap to plan'}))));
-      });c.append(l);body.append(c);
-    })(addDays(ws,i))}
-  }
-  return upd;
-}
-
 /* ================= FAMILY INFO (notes) ================= */
 var NOTE_CATS=[['home','Home','🏠'],['health','Health','🩺'],['school','School','🎒'],['money','Money','💳'],['travel','Travel','🧳'],['other','Other','📝']];
 var NOTE_TEMPLATES=[['Wi-Fi & home','home','Wi-Fi name: \nWi-Fi password: \nAlarm / garage code: \nLandlord / plumber / electrician: '],['Emergency contacts','health','Mom: \nDad: \nNeighbour: \nFamily doctor: \nPoison control: 1-800-222-1222'],['School details','school','School: \nOffice phone: \nTeacher: \nBus number & times: \nPickup rules: '],['Insurance & doctors','health','Health insurer: \nPolicy / member ID: \nPharmacy: \nDentist: \nPediatrician: ']];

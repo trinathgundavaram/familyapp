@@ -47,7 +47,7 @@ function greet(){var hh=new Date().getHours();return hh<5?'Good night':hh<12?'Go
 /* ================= state ================= */
 var S={mode:'local',uid:'local',fam:{currency:'$',name:'Our family'},famId:null,members:{},ready:false,auth:null};
 var EMOJIS=['🦊','🐼','🐯','🐸','🦉','🐙','🦄','🐻','🐶','🐱','🦁','🐧'];
-var COLORS=['#12A37A','#EF4444','#10B981','#F59E0B','#0EA5E9','#EC4899','#8B5CF6','#14B8A6'];
+var COLORS=['#00A2C7','#EF4444','#10B981','#F59E0B','#0EA5E9','#EC4899','#8B5CF6','#14B8A6'];
 function me(){return S.members[S.uid]||{name:'Me',emoji:'🦊',color:COLORS[0]}}
 function memberList(){return Object.keys(S.members).map(function(id){return Object.assign({id:id},S.members[id])}).sort(function(a,b){return (a.name||'').localeCompare(b.name||'')})}
 function nameOf(uid){var m=S.members[uid];return uid===S.uid?(m&&m.name)||'Me':(m&&m.name)||'Family'}
@@ -60,7 +60,7 @@ function avatars(ids){
 
 /* ================= store ================= */
 var Store={cloud:false,fdb:null,FS:null,cols:{},ucols:{},unsubs:[]};
-var FAMCOLS=['events','tasks','shop','txns','bills','house','budgets','goals','trips','notes','meals'];
+var FAMCOLS=['events','tasks','shop','txns','bills','house','budgets','goals','trips','notes'];
 var refreshQueued=false;
 function refresh(){
   if(refreshQueued)return;refreshQueued=true;
@@ -434,7 +434,7 @@ function updCalTab(){
   });
 }
 function buildShell(){
-  var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['timetable','Timetable','🗓️'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['house','Household','🔑'],['food','Calories','🥗'],['trips','Trips','✈️'],['meals','Meal plan','🍽️'],['notes','Family info','📒']];
+  var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['house','Household','🔑'],['food','Calories','🥗'],['trips','Trips','✈️'],['notes','Family info','📒']];
   var side=$('#side');
   side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},ico('home')),h('div',null,h('b',{text:'Gundavaram'}),h('small',{text:'Family hub'}))));
   nav.forEach(function(n){side.append(h('button',{class:'navi',type:'button','data-route':n[0],onclick:function(){go(n[0])}},h('span',{class:'ic'},n[0]==='cal'?calIcon():ico(n[2])),n[1]))});
