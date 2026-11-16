@@ -14,6 +14,24 @@ function lStats(t){
   var planned=Math.max(0,Math.min(N,diffDays(today(),t.start)+1));
   return {N:N,done:done,hours:r1(hours),planned:planned,diff:done-planned,pct:Math.round(done/N*100)};
 }
+function lCourseOf(t,id){return lTpl(t).courses.filter(function(c){return c.id===id})[0]||{name:id,platform:''}}
+function lCourseStats(t){
+  var tp=lTpl(t);
+  return tp.courses.map(function(c){
+    var ds=tp.days.filter(function(d){return d[1]===c.id}),done=0,hrs=0,started=false;
+    ds.forEach(function(d){var x=lDay(t,d[0]);if(x.status==='done')done++;if(x.status&&x.status!=='todo')started=true;hrs+=Number(x.hours)||0});
+    return {c:c,days:ds,total:ds.length,done:done,hours:r1(hrs),state:done===ds.length&&ds.length?'done':(started?'doing':'todo')};
+  }).filter(function(x){return x.total});
+}
+function lActivity(t){
+  var m={};
+  col('learn').items.filter(function(x){return x.kind==='day'&&x.track===t.id&&(x.on||x.doneOn)&&(x.status!=='todo'||x.hours)}).forEach(function(x){
+    var d=x.on||x.doneOn;m[d]=m[d]||{hours:0,days:[]};m[d].hours+=Number(x.hours)||0;m[d].days.push(x);
+  });
+  return m;
+}
+function lStreak(act){var d=today(),n=0;if(!act[d])d=addDays(d,-1);while(act[d]){n++;d=addDays(d,-1)}return n}
+function lSaveDay(t,n,patch){var o=Object.assign({},lDay(t,n),{id:'d_'+t.id+'_'+n,kind:'day',track:t.id,n:n,on:today()},patch);col('learn').save(o)}
 function lCurrent(t){var tp=lTpl(t);for(var i=0;i<tp.days.length;i++){if(lDay(t,tp.days[i][0]).status!=='done')return tp.days[i]}return null}
 function lScore(t,w){var x=lWeek(t,w);if(x.a==null||x.b==null||x.c==null||x.a===''||x.b===''||x.c==='')return null;return Number(x.a)+Number(x.b)+Number(x.c)}
 function lDecision(s){return s==null?'':s>=5?'Move on':s>=3?'Practise 1–2 more days':'Repeat this week'}
@@ -35,9 +53,9 @@ function learnDayForm(t,d){
       {k:'conf',label:'How confident do you feel? (1–5)',type:'chips',opts:[['','–'],[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5']]},
       {k:'note',label:'Notes',type:'textarea',rows:3}],
     save:function(v){
-      var o=Object.assign({},x,{id:'d_'+t.id+'_'+d[0],kind:'day',track:t.id,n:d[0],status:v.status,hours:v.hours,conf:v.conf,note:v.note});
-      if(v.status==='done'&&!o.doneOn)o.doneOn=today();
-      col('learn').save(o);toast('Saved');
+      var p={status:v.status,hours:v.hours,conf:v.conf,note:v.note};
+      if(v.status==='done'&&!x.doneOn)p.doneOn=today();
+      lSaveDay(t,d[0],p);toast('Saved');
     }});
 }
 function learnWeekForm(t,w){
@@ -66,60 +84,92 @@ function pageLearn(el,param){
     };
   }
   el.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){go('learn')}},'‹ All tracks'));
-  var head=h('div'),kp=h('div',{class:'kpis'}),seg=segControl([['today','Today'],['plan','Plan'],['weeks','Weekly'],['cap','Capstone']],tab,function(v){tab=v;upd()});
-  el.append(head,kp,seg,body);
+  var head=h('div'),bar=h('div'),kp=h('div',{class:'kpis'}),seg=segControl([['today','Today'],['courses','Courses'],['daily','Daily'],['weeks','Weekly'],['plan','Plan']],tab,function(v){tab=v;upd()});
+  el.append(head,bar,kp,seg,body);
+  function dayRow(d,edit,withCourse){
+    var st=lDay(t,d[0]).status||'todo';
+    return h('button',{class:'item',type:'button',onclick:function(){if(edit)learnDayForm(t,d);else toast('View only')}},h('span',{text:LSTAT_IC[st],style:{fontSize:'1.1rem'}}),h('div',{class:'t'},h('b',{text:'Day '+d[0]+' · '+d[2]}),h('small',{text:(withCourse?lCourseOf(t,d[1]).name+' · ':'')+d[3]})));
+  }
   function upd(){
     t=col('learn').get(param);
-    if(!t){head.replaceChildren(emptyState('🤷','This track was not found.'));kp.replaceChildren();body.replaceChildren();seg.hidden=true;return}
-    var tp=lTpl(t),s=lStats(t),edit=lCanEdit(t);
+    if(!t){head.replaceChildren(emptyState('🤷','This track was not found.'));kp.replaceChildren();bar.replaceChildren();body.replaceChildren();seg.hidden=true;return}
+    var tp=lTpl(t),s=lStats(t),edit=lCanEdit(t),cs=lCourseStats(t),cdone=cs.filter(function(x){return x.state==='done'}).length;
     head.replaceChildren(pageHead(t.name,nameOf(t.owner)+' · started '+dayLabel(t.start)+' · '+s.hours+' h logged'+(edit?'':' · view only')));
+    bar.replaceChildren(lBar(s.pct),h('div',{class:'small muted',text:'Overall: '+s.pct+'% · '+s.done+' of '+s.N+' days'}));
     kp.replaceChildren(
       h('div',{class:'kpi'},h('b',{class:'num',text:s.done+'/'+s.N}),h('span',{text:'Days done'})),
-      h('div',{class:'kpi'},h('b',{class:'num',text:s.pct+'%'}),h('span',{text:'Complete'})),
+      h('div',{class:'kpi'},h('b',{class:'num',text:cdone+'/'+cs.length}),h('span',{text:'Courses done'})),
       h('div',{class:'kpi'},h('b',{class:'num',style:{color:s.diff<0?'var(--over)':''},text:s.planned===0?'–':(s.diff>0?'+':'')+s.diff}),h('span',{text:lPace(s)})));
     body.replaceChildren();
     if(tab==='today'){
       var c=lCurrent(t);
-      if(!c){body.append(h('div',{class:'card'},emptyState('🎉','All 60 days done. Well done!')))}
+      if(!c){body.append(h('div',{class:'card'},emptyState('🎉','All '+s.N+' days done. Well done!')))}
       else{
-        var x=lDay(t,c[0]),card=h('section',{class:'card'});
-        card.append(h('div',{class:'chead'},h('h2',{text:'Day '+c[0]+' · '+tp.weeks[Math.ceil(c[0]/7)-1]}),h('span',{class:'pill brand',text:c[1]})));
-        card.append(h('div',null,h('div',{class:'label',text:'Learn (45 min)'}),h('div',{text:c[2]})),
+        var x=lDay(t,c[0]),co=lCourseOf(t,c[1]),cst=cs.filter(function(q){return q.c.id===c[1]})[0],card=h('section',{class:'card'});
+        card.append(h('div',{class:'chead'},h('h2',{text:'Day '+c[0]+' · '+tp.weeks[Math.ceil(c[0]/7)-1]}),h('span',{class:'pill brand',text:co.platform})));
+        card.append(h('div',null,h('div',{class:'label',text:'Course'}),h('div',{text:co.name+(cst?' ('+cst.done+' of '+cst.total+' days done)':'')})),
+          h('div',null,h('div',{class:'label',text:'Learn (45 min)'}),h('div',{text:c[2]})),
           h('div',null,h('div',{class:'label',text:'Code (60 min)'}),h('div',{text:c[3]})),
           h('div',null,h('div',{class:'label',text:'Deliverable'}),h('div',{text:c[4]})));
         if(edit){
           card.append(chipGroup(LSTAT.map(function(o){return [o[0],o[1],LSTAT_IC[o[0]]]}),x.status||'todo',false,function(v){
-            col('learn').save(Object.assign({},lDay(t,c[0]),{id:'d_'+t.id+'_'+c[0],kind:'day',track:t.id,n:c[0],status:v,doneOn:v==='done'?today():''}));
+            lSaveDay(t,c[0],{status:v,doneOn:v==='done'?today():''});
             if(v==='done')toast('Day '+c[0]+' done');
           }),h('button',{class:'btn',type:'button',onclick:function(){learnDayForm(t,c)}},'Add hours and notes'));
         }
         body.append(card);
         var nx=tp.days.filter(function(d){return d[0]>c[0]&&lDay(t,d[0]).status!=='done'}).slice(0,3);
-        if(nx.length){var l=h('div',{class:'list'});nx.forEach(function(d){l.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:'Day '+d[0]+' · '+d[2]}),h('small',{text:d[1]+' · '+d[4]}))))});body.append(h('section',{class:'card'},h('div',{class:'label',text:'Coming up'}),l))}
+        if(nx.length){var l=h('div',{class:'list'});nx.forEach(function(d){l.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:'Day '+d[0]+' · '+d[2]}),h('small',{text:lCourseOf(t,d[1]).name+' · '+d[4]}))))});body.append(h('section',{class:'card'},h('div',{class:'label',text:'Coming up'}),l))}
       }
-    }else if(tab==='plan'){
-      tp.weeks.forEach(function(wn,wi){
-        var ds=tp.days.filter(function(d){return Math.ceil(d[0]/7)===wi+1}),dn=ds.filter(function(d){return lDay(t,d[0]).status==='done'}).length;
-        var card=h('section',{class:'card'},h('div',{class:'chead'},h('h2',{text:'Week '+(wi+1)+' · '+wn}),h('span',{class:'pill'+(dn===ds.length?' green':''),text:dn+'/'+ds.length})));
-        var l=h('div',{class:'list'});
-        ds.forEach(function(d){var st=lDay(t,d[0]).status||'todo';
-          l.append(h('button',{class:'item',type:'button',onclick:function(){if(edit)learnDayForm(t,d);else toast('View only')}},h('span',{text:LSTAT_IC[st],style:{fontSize:'1.1rem'}}),h('div',{class:'t'},h('b',{text:'Day '+d[0]+' · '+d[2]}),h('small',{text:d[1]+' · '+d[3]}))));
-        });
-        card.append(l);body.append(card);
+    }else if(tab==='courses'){
+      var cc=h('section',{class:'card'},h('div',{class:'chead'},h('h2',{text:'Progress by course'}),h('span',{class:'pill'+(cdone===cs.length?' green':''),text:cdone+'/'+cs.length})));
+      var cl=h('div',{class:'list'});
+      cs.forEach(function(q){
+        var ic={done:'✅',doing:'🔄',todo:'⬜'}[q.state];
+        cl.append(h('button',{class:'item',type:'button',style:{flexWrap:'wrap'},onclick:function(){
+          var l=h('div',{class:'list'});q.days.forEach(function(d){l.append(dayRow(d,edit,false))});
+          openSheet(q.c.name,h('div',{class:'form'},h('div',{class:'muted small',text:q.c.platform+' · '+q.done+' of '+q.total+' days done'+(q.hours?' · '+q.hours+' h':'')}),l));
+        }},h('span',{text:ic,style:{fontSize:'1.1rem'}}),h('div',{class:'t'},h('b',{text:q.c.name}),h('small',{text:q.c.platform+' · '+q.done+'/'+q.total+' days'+(q.hours?' · '+q.hours+' h':'')}),lBar(Math.round(q.done/q.total*100)))));
       });
-    }else if(tab==='weeks'){
-      var card2=h('section',{class:'card'}),l2=h('div',{class:'list'});
-      tp.weeks.forEach(function(wn,wi){var sc=lScore(t,wi+1);
-        l2.append(h('button',{class:'item',type:'button',onclick:function(){if(edit)learnWeekForm(t,wi+1);else toast('View only')}},h('div',{class:'t'},h('b',{text:'Week '+(wi+1)+' · '+wn}),h('small',{text:sc==null?'Not scored yet':lDecision(sc)})),h('span',{class:'pill '+(sc==null?'':sc>=5?'green':sc>=3?'brand':'red'),text:sc==null?'–':sc+'/6'})));
-      });
-      card2.append(h('div',{class:'small muted',text:'At the end of each week, score yourself 0–2 on three questions. 5–6 means move on.'}),l2);body.append(card2);
-    }else{
+      cc.append(cl);body.append(cc);
       var card3=h('section',{class:'card'}),l3=h('div',{class:'list'}),nd=0;
       tp.capstone.forEach(function(r,i){var x=lCap(t,i),on=!!x.done;if(on)nd++;
         l3.append(h('button',{class:'item',type:'button',onclick:function(){if(!edit){toast('View only');return}col('learn').save({id:'c_'+t.id+'_'+i,kind:'cap',track:t.id,n:i,done:!on})}},h('span',{text:on?'✅':'⬜',style:{fontSize:'1.1rem'}}),h('div',{class:'t'},h('b',{text:r}))));
       });
       card3.append(h('div',{class:'chead'},h('h2',{text:'Final project checklist'}),h('span',{class:'pill'+(nd===tp.capstone.length?' green':''),text:nd+'/'+tp.capstone.length})),l3);body.append(card3);
       if(edit)body.append(h('button',{class:'btn link danger',type:'button',style:{alignSelf:'flex-start'},onclick:function(){askConfirm('Delete this track and all its progress?','Delete',function(){col('learn').items.filter(function(x){return x.id===t.id||x.track===t.id}).forEach(function(x){col('learn').del(x.id)});go('learn')})}},'Delete this track'));
+    }else if(tab==='daily'){
+      var act=lActivity(t),td=today(),wk=0,k;
+      for(k=0;k<7;k++){var a=act[addDays(td,-k)];if(a)wk+=a.hours}
+      var sc=h('div',{class:'kpis'},
+        h('div',{class:'kpi'},h('b',{class:'num',text:lStreak(act)+''}),h('span',{text:'Day streak'})),
+        h('div',{class:'kpi'},h('b',{class:'num',text:r1((act[td]||{hours:0}).hours)+' h'}),h('span',{text:'Today (goal 2 h)'})),
+        h('div',{class:'kpi'},h('b',{class:'num',text:r1(wk)+' h'}),h('span',{text:'Last 7 days'})));
+      var span=Math.max(1,Math.min(diffDays(td,t.start)+1,84)),grid=h('div',{style:{display:'flex',flexWrap:'wrap',gap:'6px'}});
+      for(k=0;k<span;k++){
+        var ds=addDays(t.start,k),a2=act[ds],hrs=a2?a2.hours:0,bg=hrs>=2?'var(--good)':(a2?'color-mix(in srgb,var(--good) 40%,var(--soft))':'var(--soft)');
+        grid.append(h('span',{title:dayLabel(ds)+(a2?' · '+r1(hrs)+' h':''),style:{width:'30px',height:'30px',borderRadius:'8px',background:bg,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:'.72rem',fontWeight:'700',color:hrs>=2?'#fff':'var(--muted)',outline:ds===td?'2px solid var(--brand)':'none'},text:String(parseD(ds).getDate())}));
+      }
+      body.append(sc,h('section',{class:'card'},h('div',{class:'label',text:'Every day since you started'}),grid,h('div',{class:'small muted',text:'Dark green = 2 hours or more. Light green = some progress.'})));
+      var dates=Object.keys(act).sort().reverse(),lc=h('section',{class:'card'},h('div',{class:'label',text:'Daily log'})),ll=h('div',{class:'list'});
+      dates.slice(0,30).forEach(function(ds){var a3=act[ds];
+        ll.append(h('div',{class:'item'},h('div',{class:'t'},h('b',{text:dayLabel(ds)+' · '+r1(a3.hours)+' h'}),h('small',{text:a3.days.sort(function(p,q){return p.n-q.n}).map(function(x){return 'Day '+x.n+' '+LSTAT_IC[x.status||'todo']}).join('  ')+(a3.days.some(function(x){return x.note})?'  · '+a3.days.filter(function(x){return x.note})[0].note:'')}))));
+      });
+      if(!dates.length)ll.append(emptyState('🎯','Nothing logged yet. Mark today\'s day to start your streak.'));
+      lc.append(ll);body.append(lc);
+    }else if(tab==='plan'){
+      tp.weeks.forEach(function(wn,wi){
+        var ds=tp.days.filter(function(d){return Math.ceil(d[0]/7)===wi+1}),dn=ds.filter(function(d){return lDay(t,d[0]).status==='done'}).length;
+        var card=h('section',{class:'card'},h('div',{class:'chead'},h('h2',{text:'Week '+(wi+1)+' · '+wn}),h('span',{class:'pill'+(dn===ds.length?' green':''),text:dn+'/'+ds.length})));
+        var l=h('div',{class:'list'});ds.forEach(function(d){l.append(dayRow(d,edit,true))});
+        card.append(l);body.append(card);
+      });
+    }else{
+      var card2=h('section',{class:'card'}),l2=h('div',{class:'list'});
+      tp.weeks.forEach(function(wn,wi){var sc2=lScore(t,wi+1);
+        l2.append(h('button',{class:'item',type:'button',onclick:function(){if(edit)learnWeekForm(t,wi+1);else toast('View only')}},h('div',{class:'t'},h('b',{text:'Week '+(wi+1)+' · '+wn}),h('small',{text:sc2==null?'Not scored yet':lDecision(sc2)})),h('span',{class:'pill '+(sc2==null?'':sc2>=5?'green':sc2>=3?'brand':'red'),text:sc2==null?'–':sc2+'/6'})));
+      });
+      card2.append(h('div',{class:'small muted',text:'At the end of each week, score yourself 0–2 on three questions. 5–6 means move on.'}),l2);body.append(card2);
     }
   }
   return upd;
