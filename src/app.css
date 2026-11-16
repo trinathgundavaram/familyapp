@@ -7,7 +7,7 @@
   --shadow:0 1px 2px rgba(28,28,26,.04),0 1px 6px rgba(28,28,26,.03);
   --shadow-lg:0 12px 32px rgba(28,28,26,.10),0 2px 6px rgba(28,28,26,.05);
   --scrim:rgba(20,20,18,.42);
-  --c-home:#12A37A; --c-cal:#C9554E; --c-tasks:#5468C4; --c-shop:#C7772E; --c-money:#12A37A; --c-food:#4A9A68; --c-trips:#3D85C6; --c-meals:#C4623F; --c-notes:#8462B8; --c-family:#B95683; --c-time:#2F9488; --c-house:#2F8F7E;
+  --c-home:#12A37A; --c-cal:#C9554E; --c-tasks:#5468C4; --c-shop:#C7772E; --c-money:#12A37A; --c-food:#4A9A68; --c-trips:#3D85C6; --c-meals:#C4623F; --c-notes:#8462B8; --c-family:#B95683; --c-time:#2F9488; --c-house:#2F8F7E; --c-learn:#5468C4;
   --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI Variable','Segoe UI',Inter,Roboto,'Helvetica Neue',Arial,sans-serif;
   --font-d:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI Variable Display','Segoe UI',Inter,Roboto,'Helvetica Neue',Arial,sans-serif;
   --r:16px; --r-sm:12px;
@@ -353,7 +353,7 @@ details.manual[open]{padding-bottom:14px}
   --over:#D93F5C; --good:#0E9F7E; --warn:#C98A1B;
   --shadow:none; --shadow-lg:0 20px 48px rgba(31,22,69,.16),0 2px 8px rgba(31,22,69,.06);
   --scrim:rgba(31,22,69,.42);
-  --c-home:#00A2C7; --c-cal:#E0457B; --c-tasks:#5A4FCF; --c-shop:#E08A2E; --c-money:#0E9F7E; --c-food:#2FA36B; --c-trips:#00A2C7; --c-notes:#7B5CC4; --c-family:#C2478A; --c-time:#1F8FA8; --c-house:#5A4FCF;
+  --c-home:#00A2C7; --c-cal:#E0457B; --c-tasks:#5A4FCF; --c-shop:#E08A2E; --c-money:#0E9F7E; --c-food:#2FA36B; --c-trips:#00A2C7; --c-notes:#7B5CC4; --c-family:#C2478A; --c-time:#1F8FA8; --c-house:#5A4FCF; --c-learn:#5A4FCF;
   --font:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --font-d:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --r:18px; --r-sm:12px;
@@ -510,7 +510,7 @@ details.manual{border:0;background:var(--soft)}
   --brand:#00A2C7; --brand-strong:#00809E; --brand-soft:#D6F0F7; --brand-tint:#EEF9FC; --brand-ink:#FFFFFF;
   --accent:#00A2C7; --over:#E5484D; --good:#0E9F7E;
   --shadow-lg:0 20px 48px rgba(15,42,61,.14),0 2px 8px rgba(15,42,61,.05); --scrim:rgba(15,42,61,.40);
-  --c-home:#00A2C7; --c-cal:#E5677A; --c-tasks:#2F7FD8; --c-shop:#E8963A; --c-money:#0E9F7E; --c-food:#2FA36B; --c-trips:#00A2C7; --c-notes:#3E93B8; --c-family:#E07A8E; --c-time:#1F8FA8; --c-house:#1A8FB0;
+  --c-home:#00A2C7; --c-cal:#E5677A; --c-tasks:#2F7FD8; --c-shop:#E8963A; --c-money:#0E9F7E; --c-food:#2FA36B; --c-trips:#00A2C7; --c-notes:#3E93B8; --c-family:#E07A8E; --c-time:#1F8FA8; --c-house:#1A8FB0; --c-learn:#2F7FD8;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){

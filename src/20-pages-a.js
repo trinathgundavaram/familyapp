@@ -71,6 +71,7 @@ function pageHome(el){
     head.replaceChildren(h('h1',{text:greet()+(m.name?', '+m.name:'')}),h('p',{text:dayLabel(t,true)+(S.fam.name?' · '+S.fam.name:'')}));
 
     var hc=houseDueCard();if(hc)grid.append(hc);
+    var lc=learnHomeCard();if(lc)grid.append(lc);
     // today
     var c=card(),evs=eventsOn(t),tsk=col('tasks').items.filter(function(x){return x.due&&x.due<=t&&(!x.done||(x.doneAt&&x.doneAt>=new Date(t+'T00:00').getTime()))}).sort(function(a,b){return a.due<b.due?-1:1});
     c.append(cardHead('📅','var(--c-cal)','Today','Calendar',function(){go('cal')}));
@@ -124,7 +125,7 @@ function pageHome(el){
 function pageMore(el){
   el.append(pageHead('More'));
   var g=h('div',{class:'grid g2'});el.append(g);
-  [['house','🔑','Household','Insurance, bills, mortgage, subscriptions, deadlines','--c-house'],['food','🥗','Calories','Track what you eat','--c-food'],['trips','✈️','Trips','Plan holidays, packing, bookings','--c-trips'],['notes','📒','Family info','Wi-Fi, doctors, school, emergency numbers','--c-notes'],['shop','🛒','Shopping','Shared shopping lists','--c-shop'],['family','⚙️','Family & settings','Members, invite code, preferences','--c-family']].forEach(function(r){
+  [['house','🔑','Household','Insurance, bills, mortgage, subscriptions, deadlines','--c-house'],['learn','book','Learning','Course roadmaps and progress for the family','--c-learn'],['food','🥗','Calories','Track what you eat','--c-food'],['trips','✈️','Trips','Plan holidays, packing, bookings','--c-trips'],['notes','📒','Family info','Wi-Fi, doctors, school, emergency numbers','--c-notes'],['shop','🛒','Shopping','Shared shopping lists','--c-shop'],['family','⚙️','Family & settings','Members, invite code, preferences','--c-family']].forEach(function(r){
     g.append(h('button',{class:'card tap',type:'button',onclick:function(){go(r[0])}},h('div',{class:'chead'},icoTile(r[1],'var('+r[4]+')'),h('div',{class:'grow'},h('h2',{text:r[2]}),h('div',{class:'muted small',text:r[3]})),h('span',{class:'chev','aria-hidden':'true'},'›'))));
   });
 }

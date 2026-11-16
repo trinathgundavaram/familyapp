@@ -60,7 +60,7 @@ function avatars(ids){
 
 /* ================= store ================= */
 var Store={cloud:false,fdb:null,FS:null,cols:{},ucols:{},unsubs:[]};
-var FAMCOLS=['events','tasks','shop','txns','bills','house','budgets','goals','trips','notes'];
+var FAMCOLS=['events','tasks','shop','txns','bills','house','learn','budgets','goals','trips','notes'];
 var refreshQueued=false;
 function refresh(){
   if(refreshQueued)return;refreshQueued=true;
@@ -436,7 +436,7 @@ function updCalTab(){
   });
 }
 function buildShell(){
-  var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['house','Household','🔑'],['food','Calories','🥗'],['trips','Trips','✈️'],['notes','Family info','📒']];
+  var nav=[['home','Home','🏠'],['cal','Calendar','📅'],['tasks','Tasks','✅'],['shop','Shopping','🛒'],['money','Money','💰'],['house','Household','🔑'],['learn','Learning','book'],['food','Calories','🥗'],['trips','Trips','✈️'],['notes','Family info','📒']];
   var side=$('#side');
   side.append(h('div',{class:'brandrow'},h('div',{class:'logo sm','aria-hidden':'true'},ico('home')),h('div',null,h('b',{text:'Gundavaram'}),h('small',{text:'Family hub'}))));
   nav.forEach(function(n){side.append(h('button',{class:'navi',type:'button','data-route':n[0],onclick:function(){go(n[0])}},h('span',{class:'ic'},n[0]==='cal'?calIcon():ico(n[2])),n[1]))});
