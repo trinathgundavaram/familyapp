@@ -1,5 +1,5 @@
 /* ================= LEARNING: course roadmaps with progress tracking ================= */
-var LEARN_TPL={ai:/*LEARNAI*/};
+var LEARN_TPL={ai:/*LEARNAI*/,k8s:/*LEARNK8S*/};
 var LSTAT=[['todo','Not started'],['doing','In progress'],['blocked','Blocked'],['done','Done']];
 var LSTAT_IC={todo:'⬜',doing:'🔄',blocked:'⛔',done:'✅'};
 function lTracks(){return col('learn').items.filter(function(x){return x.kind==='track'&&LEARN_TPL[x.tpl]})}
@@ -75,7 +75,7 @@ function pageLearn(el,param){
     el.append(pageHead('Learning','Roadmaps your family is working through',[h('button',{class:'btn primary sm',type:'button',onclick:learnTrackForm},'＋ New track')]),body);
     return function upd(){
       body.replaceChildren();var ts=lTracks();
-      if(!ts.length){body.append(h('div',{class:'card'},emptyState('🎯','No learning tracks yet.',h('button',{class:'btn primary',type:'button',onclick:learnTrackForm},'Start AI Engineering'))));return}
+      if(!ts.length){body.append(h('div',{class:'card'},emptyState('🎯','No learning tracks yet.',h('button',{class:'btn primary',type:'button',onclick:learnTrackForm},'Start a track'))));return}
       ts.forEach(function(x){var s=lStats(x),c=lCurrent(x);
         body.append(h('button',{class:'card tap',type:'button',onclick:function(){go('learn',x.id)}},
           h('div',{class:'chead'},icoTile('book','var(--c-learn)'),h('div',{class:'grow'},h('h2',{text:x.name}),h('div',{class:'muted small',text:nameOf(x.owner)+' · '+s.done+' of '+s.N+' days · '+lPace(s)})),avatar(x.owner),h('span',{class:'chev','aria-hidden':'true'},'›')),
