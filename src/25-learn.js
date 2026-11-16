@@ -38,11 +38,28 @@ function lDecision(s){return s==null?'':s>=5?'Move on':s>=3?'Practise 1–2 more
 function lPace(s){return s.planned===0?'Starts '+'soon':s.diff===0?'On track':s.diff>0?s.diff+' day'+(s.diff>1?'s':'')+' ahead':Math.abs(s.diff)+' day'+(s.diff<-1?'s':'')+' behind'}
 function lBar(p,cls){var i=h('i');i.style.width=p+'%';if(cls)i.className=cls;return h('div',{class:'bar'},i)}
 
-function learnTrackForm(){
+function learnTrackForm(pre){
+  if(typeof pre!=='string')pre=null;
   var opts=Object.keys(LEARN_TPL).map(function(k){return [k,LEARN_TPL[k].name]});
-  openForm({title:'Start a learning track',saveLabel:'Start',values:{tpl:opts[0][0],owner:S.uid,start:today()},
+  openForm({title:'Start a learning track',saveLabel:'Start',values:{tpl:pre||opts[0][0],owner:S.uid,start:today()},
     fields:[{k:'tpl',label:'Roadmap',type:'select',opts:opts},{k:'owner',label:'Whose is it',type:'one'},{k:'start',label:'Start date',type:'date',req:true}],
     save:function(v){var id=col('learn').add({kind:'track',tpl:v.tpl,name:LEARN_TPL[v.tpl].name,owner:v.owner||S.uid,start:v.start});toast('Track started');go('learn',id)}});
+}
+function learnDeleteTrack(t){
+  askConfirm('Delete "'+t.name+'" and all its progress? This cannot be undone.','Delete track',function(){
+    col('learn').items.filter(function(x){return x.id===t.id||x.track===t.id}).forEach(function(x){col('learn').del(x.id)});
+    toast('Track deleted');go('learn');
+  });
+}
+// Whole roadmap: consecutive days of one course become one block; projects, reviews and capstone days stay one per row.
+function lBlocks(tp,wi){
+  var out=[];
+  tp.days.filter(function(d){return Math.ceil(d[0]/7)===wi+1}).forEach(function(d){
+    var co=tp.courses.filter(function(c){return c.id===d[1]})[0]||{name:d[1],platform:''},single=['proj','rev','cap'].indexOf(d[1])>=0,last=out[out.length-1];
+    if(!single&&last&&last.cid===d[1])last.days.push(d);
+    else out.push({cid:d[1],co:co,single:single,days:[d]});
+  });
+  return out;
 }
 function learnDayForm(t,d){
   var x=lDay(t,d[0]);
@@ -70,31 +87,60 @@ function learnWeekForm(t,w){
 }
 
 function pageLearn(el,param){
-  var t=param?col('learn').get(param):null,tab='today',body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+  var preview=param&&param.indexOf('tpl-')===0,t=param?(preview?{id:param,tpl:param.slice(4),name:(LEARN_TPL[param.slice(4)]||{}).name,owner:'',start:today(),preview:true}:col('learn').get(param)):null,tab='today',body=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
   if(!param){
     el.append(pageHead('Learning','Roadmaps your family is working through',[h('button',{class:'btn primary sm',type:'button',onclick:learnTrackForm},'＋ New track')]),body);
     return function upd(){
       body.replaceChildren();var ts=lTracks();
-      if(!ts.length){body.append(h('div',{class:'card'},emptyState('🎯','No learning tracks yet.',h('button',{class:'btn primary',type:'button',onclick:learnTrackForm},'Start a track'))));return}
+      if(!ts.length){body.append(h('div',{class:'card'},emptyState('🎯','No learning tracks yet.',h('button',{class:'btn primary',type:'button',onclick:learnTrackForm},'Start a track'))))}
       ts.forEach(function(x){var s=lStats(x),c=lCurrent(x);
         body.append(h('button',{class:'card tap',type:'button',onclick:function(){go('learn',x.id)}},
           h('div',{class:'chead'},icoTile('book','var(--c-learn)'),h('div',{class:'grow'},h('h2',{text:x.name}),h('div',{class:'muted small',text:nameOf(x.owner)+' · '+s.done+' of '+s.N+' days · '+lPace(s)})),avatar(x.owner),h('span',{class:'chev','aria-hidden':'true'},'›')),
           lBar(s.pct),c?h('div',{class:'small muted',text:'Next: Day '+c[0]+' – '+c[2]}):h('div',{class:'small',text:'🎉 Finished'})));
       });
+      var rc=h('section',{class:'card'},h('div',{class:'label',text:'Full roadmaps (see everything before you start)'})),rl=h('div',{class:'list'});
+      Object.keys(LEARN_TPL).forEach(function(k){var tp=LEARN_TPL[k];
+        rl.append(h('button',{class:'item',type:'button',onclick:function(){go('learn','tpl-'+k)}},h('div',{class:'t'},h('b',{text:tp.name}),h('small',{text:tp.days.length+' days · '+tp.courses.filter(function(c){return ['proj','rev','cap'].indexOf(c.id)<0}).length+' courses · '+tp.weeks.length+' weeks'})),h('span',{class:'chev','aria-hidden':'true'},'›')));
+      });
+      rc.append(rl);body.append(rc);
     };
   }
   el.append(h('button',{class:'btn link',type:'button',style:{alignSelf:'flex-start'},onclick:function(){go('learn')}},'‹ All tracks'));
-  var head=h('div'),bar=h('div'),kp=h('div',{class:'kpis'}),seg=segControl([['today','Today'],['courses','Courses'],['daily','Daily'],['weeks','Weekly'],['plan','Plan']],tab,function(v){tab=v;upd()});
+  var head=h('div'),bar=h('div'),kp=h('div',{class:'kpis'}),seg=segControl([['today','Today'],['courses','Courses'],['daily','Daily'],['weeks','Weekly'],['plan','Roadmap']],tab,function(v){tab=v;upd()});
   el.append(head,bar,kp,seg,body);
   function dayRow(d,edit,withCourse){
     var st=lDay(t,d[0]).status||'todo';
-    return h('button',{class:'item',type:'button',onclick:function(){if(edit)learnDayForm(t,d);else toast('View only')}},h('span',{text:LSTAT_IC[st],style:{fontSize:'1.1rem'}}),h('div',{class:'t'},h('b',{text:'Day '+d[0]+' · '+d[2]}),h('small',{text:(withCourse?lCourseOf(t,d[1]).name+' · ':'')+d[3]})));
+    return h('button',{class:'item',type:'button',onclick:function(){if(t.preview)return;if(edit)learnDayForm(t,d);else toast('View only')}},h('span',{text:LSTAT_IC[st],style:{fontSize:'1.1rem'}}),h('div',{class:'t'},h('b',{text:'Day '+d[0]+' · '+d[2]}),h('small',{text:(withCourse?lCourseOf(t,d[1]).name+' · ':'')+d[3]})));
+  }
+  function roadmapEl(tp,t,edit){
+    var wrap=h('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}});
+    tp.weeks.forEach(function(wn,wi){
+      var ds=tp.days.filter(function(d){return Math.ceil(d[0]/7)===wi+1}),dn=ds.filter(function(d){return lDay(t,d[0]).status==='done'}).length;
+      var card=h('section',{class:'card'},h('div',{class:'chead'},h('h2',{text:'Week '+(wi+1)+' · '+wn}),t.preview?h('span',{class:'pill',text:'Days '+ds[0][0]+'–'+ds[ds.length-1][0]}):h('span',{class:'pill'+(dn===ds.length?' green':''),text:dn+'/'+ds.length}))),l=h('div',{class:'list'});
+      lBlocks(tp,wi).forEach(function(b){
+        var first=b.days[0],lastd=b.days[b.days.length-1],rng=first[0]===lastd[0]?'Day '+first[0]:'Days '+first[0]+'–'+lastd[0];
+        var bd=b.days.filter(function(d){return lDay(t,d[0]).status==='done'}).length,any=b.days.some(function(d){var q=lDay(t,d[0]).status;return q&&q!=='todo'});
+        var ic=t.preview?'':(bd===b.days.length?'✅':(any?'🔄':'⬜'));
+        var label=b.single?({proj:'Project',rev:'Review',cap:'Capstone'}[b.cid]+': '+first[2]):b.co.name;
+        var sub=b.single?first[3]+' → '+first[4]:b.co.platform+' · '+b.days.length+' day'+(b.days.length>1?'s':'');
+        l.append(h('button',{class:'item',type:'button',onclick:function(){
+          var dl=h('div',{class:'list'});b.days.forEach(function(d){dl.append(dayRow(d,edit,false))});
+          openSheet(b.single?'Day '+first[0]:b.co.name,h('div',{class:'form'},h('div',{class:'muted small',text:rng+(b.single?'':' · '+b.co.platform)}),dl));
+        }},ic?h('span',{text:ic,style:{fontSize:'1.1rem'}}):null,h('div',{class:'t'},h('b',{text:rng+' · '+label}),h('small',{text:sub}))));
+      });
+      card.append(l);wrap.append(card);
+    });
+    return wrap;
   }
   function upd(){
-    t=col('learn').get(param);
-    if(!t){head.replaceChildren(emptyState('🤷','This track was not found.'));kp.replaceChildren();bar.replaceChildren();body.replaceChildren();seg.hidden=true;return}
+    if(!preview)t=col('learn').get(param);
+    if(!t||!LEARN_TPL[t.tpl]){head.replaceChildren(emptyState('🤷','This track was not found.'));kp.replaceChildren();bar.replaceChildren();body.replaceChildren();seg.hidden=true;return}
     var tp=lTpl(t),s=lStats(t),edit=lCanEdit(t),cs=lCourseStats(t),cdone=cs.filter(function(x){return x.state==='done'}).length;
-    head.replaceChildren(pageHead(t.name,nameOf(t.owner)+' · started '+dayLabel(t.start)+' · '+s.hours+' h logged'+(edit?'':' · view only')));
+    if(t.preview){
+      head.replaceChildren(pageHead(t.name,'Full roadmap · '+tp.days.length+' days'));bar.replaceChildren();kp.replaceChildren();seg.hidden=true;
+      body.replaceChildren(h('button',{class:'btn primary wide',type:'button',onclick:function(){learnTrackForm(t.tpl)}},'Start this track'),roadmapEl(tp,t,false));return;
+    }
+    head.replaceChildren(pageHead(t.name,nameOf(t.owner)+' · started '+dayLabel(t.start)+' · '+s.hours+' h logged'+(edit?'':' · view only'),edit?[h('button',{class:'btn sm danger',type:'button',onclick:function(){learnDeleteTrack(t)}},'Delete')]:null));
     bar.replaceChildren(lBar(s.pct),h('div',{class:'small muted',text:'Overall: '+s.pct+'% · '+s.done+' of '+s.N+' days'}));
     kp.replaceChildren(
       h('div',{class:'kpi'},h('b',{class:'num',text:s.done+'/'+s.N}),h('span',{text:'Days done'})),
@@ -137,7 +183,6 @@ function pageLearn(el,param){
         l3.append(h('button',{class:'item',type:'button',onclick:function(){if(!edit){toast('View only');return}col('learn').save({id:'c_'+t.id+'_'+i,kind:'cap',track:t.id,n:i,done:!on})}},h('span',{text:on?'✅':'⬜',style:{fontSize:'1.1rem'}}),h('div',{class:'t'},h('b',{text:r}))));
       });
       card3.append(h('div',{class:'chead'},h('h2',{text:'Final project checklist'}),h('span',{class:'pill'+(nd===tp.capstone.length?' green':''),text:nd+'/'+tp.capstone.length})),l3);body.append(card3);
-      if(edit)body.append(h('button',{class:'btn link danger',type:'button',style:{alignSelf:'flex-start'},onclick:function(){askConfirm('Delete this track and all its progress?','Delete',function(){col('learn').items.filter(function(x){return x.id===t.id||x.track===t.id}).forEach(function(x){col('learn').del(x.id)});go('learn')})}},'Delete this track'));
     }else if(tab==='daily'){
       var act=lActivity(t),td=today(),wk=0,k;
       for(k=0;k<7;k++){var a=act[addDays(td,-k)];if(a)wk+=a.hours}
@@ -158,12 +203,7 @@ function pageLearn(el,param){
       if(!dates.length)ll.append(emptyState('🎯','Nothing logged yet. Mark today\'s day to start your streak.'));
       lc.append(ll);body.append(lc);
     }else if(tab==='plan'){
-      tp.weeks.forEach(function(wn,wi){
-        var ds=tp.days.filter(function(d){return Math.ceil(d[0]/7)===wi+1}),dn=ds.filter(function(d){return lDay(t,d[0]).status==='done'}).length;
-        var card=h('section',{class:'card'},h('div',{class:'chead'},h('h2',{text:'Week '+(wi+1)+' · '+wn}),h('span',{class:'pill'+(dn===ds.length?' green':''),text:dn+'/'+ds.length})));
-        var l=h('div',{class:'list'});ds.forEach(function(d){l.append(dayRow(d,edit,true))});
-        card.append(l);body.append(card);
-      });
+      body.append(roadmapEl(tp,t,edit));
     }else{
       var card2=h('section',{class:'card'}),l2=h('div',{class:'list'});
       tp.weeks.forEach(function(wn,wi){var sc2=lScore(t,wi+1);
